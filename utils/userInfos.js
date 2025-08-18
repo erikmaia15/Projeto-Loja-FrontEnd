@@ -2,7 +2,11 @@ import api from "../router/api.js";
 
 export default {
   async getUserInfos() {
-    const response = await api.get("/usuarios");
-    return response;
+    try {
+      const response = await api.get("/usuarios");
+      return response;
+    } catch (error) {
+      return error.response;
+    }
   },
 };
