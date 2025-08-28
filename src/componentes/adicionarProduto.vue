@@ -81,13 +81,12 @@
                 </label>
                 <div class="input-wrapper">
                   <input
-                    type="number"
+                    type="text"
                     id="productPrice"
-                    v-model.number="formData.preco"
-                    min="0"
-                    step="0.01"
-                    required
+                    v-model="formData.precoCentavos"
+                    @input="formatarPrecoFunc($event)"
                     placeholder="0,00"
+                    required
                     class="form-input"
                   />
                   <span class="input-icon">💵</span>
@@ -189,15 +188,19 @@
 import { ref, computed } from "vue";
 import produtos from "../../service/produtos.js";
 import { defineEmits } from "vue";
+import formatarPreco from "../../utils/formatarPreco.js";
 
 // Estado do formulário
 const showForm = ref(false);
-
+function formatarPrecoFunc(event) {
+  const numeroFormatado = formatarPreco.formatPrice(event);
+  formData.value.precoCentavos = numeroFormatado;
+}
 // Dados do formulário
 const formData = ref({
   tituloProduto: "",
   descricao: "",
-  preco: 0,
+  precoCentavos: "0,0",
   QtdEstoque: 0,
   imagem: null,
 });
@@ -209,17 +212,16 @@ async function enviarDados() {
   try {
     const response = await produtos.cadastrarProduto(formData.value);
     if (response.status >= 200 && response.status <= 300) {
-      alert("Produto cadastrado com sucesso!");
-      showForm.value = false;
+      alert("Produto adicionado com sucesso!");
       resetForm();
+      showForm.value = false;
       emit("ProdutoNovo");
-    } else {
-      alert(`Produto não adicionado, tente novamente${response.data.message}`);
     }
   } catch (error) {
     console.log(error);
   }
 }
+
 // Alternar visibilidade do formulário
 const toggleForm = () => {
   showForm.value = !showForm.value;
@@ -255,7 +257,7 @@ const resetForm = () => {
   formData.value = {
     tituloProduto: "",
     descricao: "",
-    preco: 0,
+    precoCentavos: "0,0",
     QtdEstoque: 0,
     imagem: null,
   };

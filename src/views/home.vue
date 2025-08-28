@@ -5,6 +5,7 @@
     class="nav"
     @carrinho="abrircarrinho($event)"
   ></Navbar>
+
   <br />
   <br />
   <br />
@@ -37,13 +38,25 @@
       </div>
       <div class="carousel-inner">
         <div class="carousel-item active">
-          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
+          <img
+            src="../assets/controleProduto.png"
+            class="d-block w-100"
+            alt="..."
+          />
         </div>
         <div class="carousel-item">
-          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
+          <img
+            src="../assets/controleProduto.png"
+            class="d-block w-100"
+            alt="..."
+          />
         </div>
         <div class="carousel-item">
-          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
+          <img
+            src="../assets/controleProduto.png"
+            class="d-block w-100"
+            alt="..."
+          />
         </div>
       </div>
       <button
@@ -67,30 +80,64 @@
     </div>
     <div class="description-container">
       <p class="text-descricao">
-        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por Erik,
-        apaixonado por tecnologia e inovação! Aqui, você encontra uma ampla variedade de
-        produtos eletrônicos, desde os mais essenciais até os mais modernos lançamentos do
-        mercado. Trabalhamos para oferecer qualidade, confiança e praticidade em cada
-        compra. Nosso objetivo é facilitar sua vida com tecnologia acessível, com um
-        atendimento rápido e um site simples e seguro de navegar. 🚀 Por que escolher a
-        nossa loja? Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰
-        Entrega rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
+        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por
+        Erik, apaixonado por tecnologia e inovação! Aqui, você encontra uma
+        ampla variedade de produtos eletrônicos, desde os mais essenciais até os
+        mais modernos lançamentos do mercado. Trabalhamos para oferecer
+        qualidade, confiança e praticidade em cada compra. Nosso objetivo é
+        facilitar sua vida com tecnologia acessível, com um atendimento rápido e
+        um site simples e seguro de navegar. 🚀 Por que escolher a nossa loja?
+        Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰 Entrega
+        rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
         para quem busca praticidade e tecnologia no dia a dia.
       </p>
     </div>
   </section>
 
   <br />
+  <div class="table-actions">
+    <div class="search-container">
+      <input
+        type="text"
+        v-model="barraPesquisa"
+        placeholder="buscar produto..."
+        class="search-input"
+      />
+      <span class="search-icon">🔍</span>
+    </div>
+  </div>
+
   <section class="cards-section">
     <div class="cards-container">
-      <div v-for="produto in produtos" :key="produto.id" class="product-card">
-        <div class="card-header" @click="expandir(produto)">
+      <div
+        v-for="produto in produtos"
+        :key="produto.id"
+        class="product-card"
+        :class="{
+          'card-selecionado-remocao': isProdutoSelecionadoRemocao(produto.id),
+        }"
+      >
+        <div class="card-header">
           <h5 class="card-title">
             {{ produto.tituloProduto }}
           </h5>
+          <button
+            type="button"
+            class="btn-fechar"
+            :class="{
+              'btn-selecionado': isProdutoSelecionadoRemocao(produto.id),
+            }"
+            @click="toggleRemoverProduto(produto)"
+          >
+            <span>&times;</span>
+          </button>
         </div>
         <div class="card-image" @click="expandir(produto)">
-          <img :src="produto.imagem" class="product-image" alt="Imagem do produto" />
+          <img
+            :src="produto.imagem"
+            class="product-image"
+            alt="Imagem do produto"
+          />
         </div>
         <div class="card-body">
           <div class="card-info" @click="expandir(produto)">
@@ -103,13 +150,23 @@
               }}
             </p>
             <div class="price-stock-container">
-              <p class="card-price">R$ {{ produto.preco }},00</p>
+              <p class="card-price">R$ {{ produto.precoCentavos }}</p>
               <p class="card-stock">Estoque: {{ produto.QtdEstoque }}</p>
             </div>
           </div>
           <button class="btn-add-cart" @click="adicionarCarrinho(produto)">
             Adicionar ao carrinho
           </button>
+          <br />
+          <div class="editAdmin">
+            <button
+              class="btn-add-cart"
+              v-if="isAdmin"
+              @click="editarProduto(produto)"
+            >
+              Editar
+            </button>
+          </div>
         </div>
       </div>
       <AdicionarProduto
@@ -118,26 +175,45 @@
         :novoProduto="produtos"
       ></AdicionarProduto>
     </div>
+
+    <!-- Botão para confirmar remoção dos produtos selecionados -->
+    <div v-if="produtosParaRemover.length > 0" class="remocao-actions">
+      <button @click="confirmarRemocaoProdutos" class="btn-confirmar-remocao">
+        Confirmar remoção ({{ produtosParaRemover.length }} produtos)
+      </button>
+      <button @click="cancelarRemocao" class="btn-cancelar-remocao">
+        Cancelar
+      </button>
+    </div>
   </section>
 
   <section>
     <CardExpandido
-      v-if="Object.keys(dadosProduto).length > 0"
+      @fechar="cardExpandido = false"
+      @novoproduto="novoProduto = true"
+      v-if="Object.keys(dadosProduto).length > 0 && cardExpandido == true"
       :dados="dadosProduto"
     ></CardExpandido>
     <Carrinho
-      @removido="novoProduto += 1"
+      @removido="true"
       @fechar="abrir = false"
       v-if="abrir === true"
     ></Carrinho>
+    <EditarProduto
+      @fechar="produtoEditar = null"
+      v-if="produtoEditar != null"
+      :produto="produtoEditar"
+    ></EditarProduto>
+
     <br />
     <br />
     <br />
   </section>
+  <Footer></Footer>
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import Navbar from "../componentes/navbar.vue";
 import CardExpandido from "../componentes/cardExpandido.vue";
 import AdicionarProduto from "../componentes/adicionarProduto.vue";
@@ -146,13 +222,19 @@ import ProdutosService from "../../service/produtos.js";
 import userInfos from "../../utils/userInfos.js";
 import carrinho from "../../service/carrinho.js";
 import rotas from "../../router/rotas.js";
+import EditarProduto from "../componentes/editarProduto.vue";
+import Footer from "../componentes/footer.vue";
 const url = ref("home");
 const dadosProduto = ref({});
 const produtos = ref();
 const abrir = ref(false);
 const isAdmin = ref(false);
-const novoProduto = ref(0);
-
+const novoProduto = ref(false);
+const cardExpandido = ref(false);
+const produtoEditar = ref(null);
+const barraPesquisa = ref("");
+const produtosOriginais = ref([]);
+const produtosParaRemover = ref([]);
 async function informacoesUsuarios() {
   const userInfo = await userInfos.getUserInfos();
 
@@ -163,12 +245,58 @@ async function informacoesUsuarios() {
     rotas.push("/login");
   }
 }
+// Função para verificar se o produto está selecionado para remoção
+function isProdutoSelecionadoRemocao(produtoId) {
+  return produtosParaRemover.value.includes(produtoId);
+}
 
+// Função para toggle (adicionar/remover) produto da lista de remoção
+function toggleRemoverProduto(produto) {
+  const index = produtosParaRemover.value.indexOf(produto.id);
+
+  if (index === -1) {
+    // Se não está na lista, adiciona
+    produtosParaRemover.value.push(produto.id);
+  } else {
+    // Se já está na lista, remove
+    produtosParaRemover.value.splice(index, 1);
+  }
+}
+
+// Função para cancelar toda a seleção de remoção
+function cancelarRemocao() {
+  produtosParaRemover.value = [];
+}
+
+// Função para confirmar a remoção dos produtos selecionados
+async function confirmarRemocaoProdutos() {
+  if (produtosParaRemover.value.length === 0) return;
+
+  const confirmar = confirm(
+    `Tem certeza que deseja remover ${produtosParaRemover.value.length} produto(s)?`
+  );
+
+  if (!confirmar) return;
+  const idsComoString = produtosParaRemover.value.map((id) => String(id));
+  console.log(idsComoString);
+  const response = await ProdutosService.deletarProdutos(idsComoString);
+  if (response.status === 200) {
+    alert("Produtos removidos com sucesso");
+    produtosParaRemover.value = [];
+    await carregarCards();
+  } else {
+    alert("Ouve algum erro para remover!");
+  }
+}
+function editarProduto(produto) {
+  produtoEditar.value = produto;
+}
 async function carregarCards() {
   try {
     const response = await ProdutosService.getAllProdutos();
     if (response.status >= 200 && response.status <= 300) {
       produtos.value = response.data.produtos;
+      produtosOriginais.value = produtos.value;
     } else {
       alert(response.data.message);
     }
@@ -187,11 +315,22 @@ async function adicionarCarrinho(produto) {
 }
 function expandir(produto) {
   dadosProduto.value = produto;
+  cardExpandido.value = true;
 }
 function abrircarrinho(dados) {
   abrir.value = dados;
   console.log(abrir.value);
 }
+
+watch(barraPesquisa, (newValue) => {
+  if (newValue && newValue.trim()) {
+    produtos.value = produtosOriginais.value.filter((produto) =>
+      produto.tituloProduto.toLowerCase().includes(newValue.toLowerCase())
+    );
+  } else {
+    produtos.value = [...produtosOriginais.value];
+  }
+});
 onMounted(async () => {
   await informacoesUsuarios();
   carregarCards();
@@ -211,7 +350,134 @@ li {
 body {
   background-color: #dbb3df;
 }
+/* card button fechar */
+.btn-fechar {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
 
+.btn-fechar:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* parte para remoção de produto */
+.card-selecionado-remocao {
+  background-color: #f5f5f5 !important;
+  opacity: 0.7;
+  border: 2px solid #dc3545;
+  transition: all 0.3s ease;
+}
+
+.card-selecionado-remocao .product-image {
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.card-selecionado-remocao .card-title,
+.card-selecionado-remocao .card-description,
+.card-selecionado-remocao .card-price,
+.card-selecionado-remocao .card-stock {
+  color: #6c757d !important;
+}
+
+.btn-fechar.btn-selecionado {
+  background-color: #dc3545;
+  color: white;
+  transform: rotate(45deg);
+  transition: all 0.3s ease;
+}
+
+/* Estilos para os botões de ação de remoção */
+.remocao-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.btn-confirmar-remocao {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-confirmar-remocao:hover {
+  background-color: #c82333;
+}
+
+.btn-cancelar-remocao {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-cancelar-remocao:hover {
+  background-color: #5a6268;
+}
+
+/* barra de pesquisa */
+.table-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+.search-container {
+  position: relative;
+}
+
+.search-input {
+  padding: 0.8rem 3rem 0.8rem 1rem;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  color: black;
+}
+
+.search-input:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.search-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #6a0dad;
+}
 /* Seção do slide */
 .slide {
   display: flex;
@@ -227,12 +493,12 @@ body {
 .carousel {
   height: 70vh;
   width: 60%;
-  min-width: 400px;
 }
 
 .carousel img {
   border-radius: 15px;
   padding: 10px;
+  max-width: 100%;
   object-fit: cover;
 }
 
@@ -283,6 +549,9 @@ body {
 .card-header {
   padding: 15px;
   background: linear-gradient(135deg, #880093, #aa1bb8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .card-title {

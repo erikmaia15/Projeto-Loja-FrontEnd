@@ -11,13 +11,17 @@
       </div>
     </div>
   </main>
+  <Footer></Footer>
 </template>
-<script setup></script>
+<script setup>
+import Footer from "../componentes/footer.vue";
+</script>
 <style scoped>
 .main {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
   color: white;
 }
 main {

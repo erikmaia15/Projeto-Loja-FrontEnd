@@ -1,5 +1,5 @@
 <template>
-  <div class="CardExpandido" v-if="showCard" @click="fecharCard">
+  <div class="CardExpandido" @click="fecharCard">
     <div class="modal-overlay">
       <div class="carde" @click.stop>
         <div class="card-header">
@@ -17,19 +17,12 @@
           </div>
 
           <div class="produto-info">
-            <div class="produto-badge">
-              <span class="badge-destaque">✨ Produto em Destaque</span>
-            </div>
-
             <h2 class="produto-nome">
               {{ produto?.tituloProduto || produto?.nome }}
             </h2>
 
             <div class="produto-preco-container">
-              <span class="produto-preco">R$ {{ produto?.preco }},00</span>
-              <span class="produto-parcelas"
-                >ou 12x de R$ {{ Math.ceil(produto?.preco / 12) }},00</span
-              >
+              <span class="produto-preco">R$ {{ produto?.precoCentavos }}</span>
             </div>
 
             <div class="produto-disponibilidade">
@@ -61,12 +54,10 @@
         </div>
 
         <div class="card-actions">
-          <button class="btn-favoritar" title="Adicionar aos favoritos">
-            <span class="heart-icon">🤍</span>
-            Favoritar
-          </button>
-
-          <button class="btn-adicionar-carrinho" @click="adicionarcarrinho(produto)">
+          <button
+            class="btn-adicionar-carrinho"
+            @click="adicionarcarrinho(produto)"
+          >
             <span class="cart-icon">🛒</span>
             Adicionar ao Carrinho
           </button>
@@ -83,32 +74,23 @@
 
 <script setup>
 import carrinho from "../../service/carrinho";
-import { ref, watch } from "vue";
+import { ref, defineEmits, onMounted } from "vue";
+const emit = defineEmits(["fechar", "novoproduto"]);
 
 const produto = ref(null);
 const props = defineProps({
   dados: {
     type: Object,
-    default: () => null,
   },
 });
-const showCard = ref(true);
-
-watch(
-  () => props.dados,
-  (newVal) => {
-    produto.value = newVal;
-    console.log(newVal);
-    fecharCard();
-  },
-  { immediate: true }
-);
-
 function fecharCard() {
-  if (showCard.value === true) {
-    showCard.value = false;
+  emit("fechar");
+}
+function carregarProps() {
+  if (props.dados != null) {
+    produto.value = props.dados;
   } else {
-    showCard.value = true;
+    alert("deu algum erro!");
   }
 }
 
@@ -117,13 +99,17 @@ async function adicionarcarrinho(produto) {
     const response = await carrinho.postCarrinho(produto);
     if (response.status >= 200 && response.status <= 300) {
       alert("Produto adicionado no carrinho!");
+      emit("novoproduto");
     } else {
-      console.log(response);
+      alert(response.data.message);
     }
   } catch (error) {
-    console.log(error);
+    alert(error);
   }
 }
+onMounted(() => {
+  carregarProps();
+});
 </script>
 
 <style scoped>
@@ -275,22 +261,6 @@ async function adicionarcarrinho(produto) {
   color: #333;
 }
 
-.produto-badge {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.badge-destaque {
-  background: linear-gradient(135deg, #880093, #aa1bb8);
-  color: white;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .produto-nome {
   font-size: 28px;
   font-weight: 700;
@@ -313,12 +283,6 @@ async function adicionarcarrinho(produto) {
   font-size: 32px;
   font-weight: 800;
   color: #880093;
-}
-
-.produto-parcelas {
-  font-size: 14px;
-  color: #28a745;
-  font-weight: 600;
 }
 
 .produto-disponibilidade {

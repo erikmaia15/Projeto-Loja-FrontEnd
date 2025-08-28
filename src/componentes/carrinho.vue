@@ -32,7 +32,7 @@
               <h4 class="produto-titulo">{{ produto.tituloProduto }}</h4>
               <p class="produto-descricao">{{ produto.descricao }}</p>
               <div class="produto-preco-container">
-                <span class="produto-preco">R$ {{ produto.preco }},00</span>
+                <span class="produto-preco">R$ {{ produto.precoCentavos }}</span>
               </div>
             </div>
 
@@ -68,7 +68,7 @@
         <div class="resumo-pedido">
           <div class="linha-resumo">
             <span>Subtotal ({{ totalItens }} itens):</span>
-            <span class="valor-total">R$ {{ valorTotal }},00</span>
+            <span class="valor-total">R$ {{ valorTotal }}</span>
           </div>
           <div class="linha-resumo">
             <span>Frete:</span>
@@ -76,7 +76,7 @@
           </div>
           <div class="linha-resumo total">
             <span>Total:</span>
-            <span class="valor-final">R$ {{ valorTotal }},00</span>
+            <span class="valor-final">R$ {{ valorTotal }}</span>
           </div>
         </div>
 
@@ -94,12 +94,7 @@
 <script setup>
 import { onMounted, ref, computed } from "vue";
 import carrinho from "../../service/carrinho";
-import produtos from "../../service/produtos";
-
 const emit = defineEmits(["fechar"]);
-
-const carrinhoArrayIds = ref([]);
-const produtosArray = ref([]);
 const carBuy = ref([]);
 const quantidades = ref({});
 
@@ -116,7 +111,7 @@ const valorTotal = computed(() => {
   let total = 0;
   carBuy.value.forEach((produto) => {
     const quantidade = quantidades.value[produto.id] || 0;
-    total += produto.preco * quantidade;
+    total += produto.precoCentavos * quantidade;
   });
   return total;
 });
@@ -124,23 +119,15 @@ const valorTotal = computed(() => {
 async function getCarrinho() {
   try {
     const response = await carrinho.getCarrinho();
-    if (response.status == 200) {
-      carrinhoArrayIds.value = response.data.carrinhoIds;
-      const req = await produtos.getAllProdutos();
-      if (req.status == 200) {
-        produtosArray.value = req.data.produtos;
-        carBuy.value = [];
-
-        produtosArray.value.filter((produto) => {
-          if (carrinhoArrayIds.value.includes(produto.id)) {
-            carBuy.value.push(produto);
-            // Inicializar quantidade se não existir
-            if (!quantidades.value[produto.id]) {
-              quantidades.value[produto.id] = 1;
-            }
-          }
-        });
-      }
+    if (response) {
+      carBuy.value = response;
+      carBuy.value.map((produto) => {
+        if (!quantidades.value[produto.id]) {
+          quantidades.value[produto.id] = 1;
+        }
+      });
+    } else {
+      alert("Deu algum erro, tente novamente!");
     }
   } catch (error) {
     console.log(error);
@@ -167,7 +154,7 @@ async function removerProduto(produto) {
   const response = await carrinho.updateCarrinho(produto);
   if (response.status >= 200 && response.status <= 300) {
     alert(`Produto ${produto.tituloProduto} removido do carrinho!`);
-    getCarrinho();
+    await getCarrinho();
   } else {
     alert(`${response.data.message}`);
   }
@@ -182,7 +169,7 @@ function continuarComprando() {
 }
 
 function finalizarPedido() {
-  alert(`Pedido finalizado! Total: R$ ${valorTotal.value},00`);
+  alert(`Pedido finalizado! Total: R$ ${valorTotal.value}`);
   // Aqui você pode implementar a lógica de finalização do pedido
 }
 
