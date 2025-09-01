@@ -94,7 +94,8 @@
 <script setup>
 import { onMounted, ref, computed } from "vue";
 import carrinho from "../../service/carrinho";
-const emit = defineEmits(["fechar"]);
+import conversao from "../../utils/conversao.js";
+const emit = defineEmits(["fechar", "removido", "tela-pagamento", "dados-pagamento"]);
 const carBuy = ref([]);
 const quantidades = ref({});
 
@@ -111,9 +112,11 @@ const valorTotal = computed(() => {
   let total = 0;
   carBuy.value.forEach((produto) => {
     const quantidade = quantidades.value[produto.id] || 0;
-    total += produto.precoCentavos * quantidade;
+    let valorConvetido = conversao.reaisParaCentavos(produto.precoCentavos);
+    total += valorConvetido * quantidade;
   });
-  return total;
+  const valorFinal = conversao.centavosParaReais(total);
+  return valorFinal;
 });
 
 async function getCarrinho() {
@@ -154,6 +157,7 @@ async function removerProduto(produto) {
   const response = await carrinho.updateCarrinho(produto);
   if (response.status >= 200 && response.status <= 300) {
     alert(`Produto ${produto.tituloProduto} removido do carrinho!`);
+    emit("removido");
     await getCarrinho();
   } else {
     alert(`${response.data.message}`);
@@ -169,8 +173,12 @@ function continuarComprando() {
 }
 
 function finalizarPedido() {
-  alert(`Pedido finalizado! Total: R$ ${valorTotal.value}`);
-  // Aqui você pode implementar a lógica de finalização do pedido
+  emit("dados-pagamento", {
+    carrinho: carBuy.value,
+    valorCompra: valorTotal.value,
+  });
+  emit("tela-pagamento");
+  fecharCarrinho();
 }
 
 onMounted(() => {

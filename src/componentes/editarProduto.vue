@@ -135,9 +135,17 @@
                 </div>
 
                 <div v-if="imagePreview" class="image-preview-container">
-                  <img :src="imagePreview" alt="Preview" class="image-preview" />
+                  <img
+                    :src="imagePreview"
+                    alt="Preview"
+                    class="image-preview"
+                  />
                   <div class="image-actions">
-                    <button type="button" @click="removeImage" class="remove-image-btn">
+                    <button
+                      type="button"
+                      @click="removeImage"
+                      class="remove-image-btn"
+                    >
                       <span>🗑️</span>
                       Remover
                     </button>
@@ -286,11 +294,11 @@ const handleSubmit = async () => {
   if (response.status >= 200 && response.status <= 300) {
     console.log(response);
     alert("Produto atualizado");
+    emit("produto-atualizado", dadosParaEnvio);
   } else {
     alert("deu errro");
     console.log(response);
   }
-  emit("produto-atualizado", dadosParaEnvio);
   fecharForm();
 };
 </script>

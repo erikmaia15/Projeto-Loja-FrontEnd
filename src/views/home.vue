@@ -38,25 +38,13 @@
       </div>
       <div class="carousel-inner">
         <div class="carousel-item active">
-          <img
-            src="../assets/controleProduto.png"
-            class="d-block w-100"
-            alt="..."
-          />
+          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
         </div>
         <div class="carousel-item">
-          <img
-            src="../assets/controleProduto.png"
-            class="d-block w-100"
-            alt="..."
-          />
+          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
         </div>
         <div class="carousel-item">
-          <img
-            src="../assets/controleProduto.png"
-            class="d-block w-100"
-            alt="..."
-          />
+          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
         </div>
       </div>
       <button
@@ -80,15 +68,14 @@
     </div>
     <div class="description-container">
       <p class="text-descricao">
-        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por
-        Erik, apaixonado por tecnologia e inovação! Aqui, você encontra uma
-        ampla variedade de produtos eletrônicos, desde os mais essenciais até os
-        mais modernos lançamentos do mercado. Trabalhamos para oferecer
-        qualidade, confiança e praticidade em cada compra. Nosso objetivo é
-        facilitar sua vida com tecnologia acessível, com um atendimento rápido e
-        um site simples e seguro de navegar. 🚀 Por que escolher a nossa loja?
-        Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰 Entrega
-        rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
+        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por Erik,
+        apaixonado por tecnologia e inovação! Aqui, você encontra uma ampla variedade de
+        produtos eletrônicos, desde os mais essenciais até os mais modernos lançamentos do
+        mercado. Trabalhamos para oferecer qualidade, confiança e praticidade em cada
+        compra. Nosso objetivo é facilitar sua vida com tecnologia acessível, com um
+        atendimento rápido e um site simples e seguro de navegar. 🚀 Por que escolher a
+        nossa loja? Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰
+        Entrega rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
         para quem busca praticidade e tecnologia no dia a dia.
       </p>
     </div>
@@ -127,17 +114,14 @@
             :class="{
               'btn-selecionado': isProdutoSelecionadoRemocao(produto.id),
             }"
+            v-if="isAdmin === true"
             @click="toggleRemoverProduto(produto)"
           >
             <span>&times;</span>
           </button>
         </div>
         <div class="card-image" @click="expandir(produto)">
-          <img
-            :src="produto.imagem"
-            class="product-image"
-            alt="Imagem do produto"
-          />
+          <img :src="produto.imagem" class="product-image" alt="Imagem do produto" />
         </div>
         <div class="card-body">
           <div class="card-info" @click="expandir(produto)">
@@ -159,11 +143,7 @@
           </button>
           <br />
           <div class="editAdmin">
-            <button
-              class="btn-add-cart"
-              v-if="isAdmin"
-              @click="editarProduto(produto)"
-            >
+            <button class="btn-add-cart" v-if="isAdmin" @click="editarProduto(produto)">
               Editar
             </button>
           </div>
@@ -181,9 +161,7 @@
       <button @click="confirmarRemocaoProdutos" class="btn-confirmar-remocao">
         Confirmar remoção ({{ produtosParaRemover.length }} produtos)
       </button>
-      <button @click="cancelarRemocao" class="btn-cancelar-remocao">
-        Cancelar
-      </button>
+      <button @click="cancelarRemocao" class="btn-cancelar-remocao">Cancelar</button>
     </div>
   </section>
 
@@ -195,16 +173,25 @@
       :dados="dadosProduto"
     ></CardExpandido>
     <Carrinho
-      @removido="true"
-      @fechar="abrir = false"
       v-if="abrir === true"
+      @removido="novoProduto = true"
+      @fechar="abrir = false"
+      @dados-pagamento="(dados) => (dadosPagamentoVar = dados)"
+      @tela-pagamento="viewTelaPagamento = true"
     ></Carrinho>
+
+    <TelaPagamento
+      v-if="viewTelaPagamento"
+      :key="Date.now()"
+      :dadosPagamento="dadosPagamentoVar"
+      @fechar-tela-pagamento="viewTelaPagamento = false"
+    ></TelaPagamento>
     <EditarProduto
       @fechar="produtoEditar = null"
       v-if="produtoEditar != null"
       :produto="produtoEditar"
+      @produto-atualizado="carregarCards()"
     ></EditarProduto>
-
     <br />
     <br />
     <br />
@@ -220,10 +207,11 @@ import AdicionarProduto from "../componentes/adicionarProduto.vue";
 import Carrinho from "../componentes/carrinho.vue";
 import ProdutosService from "../../service/produtos.js";
 import userInfos from "../../utils/userInfos.js";
-import carrinho from "../../service/carrinho.js";
 import rotas from "../../router/rotas.js";
 import EditarProduto from "../componentes/editarProduto.vue";
 import Footer from "../componentes/footer.vue";
+import carrinho from "../../service/carrinho.js";
+import TelaPagamento from "../componentes/telaPagamento.vue";
 const url = ref("home");
 const dadosProduto = ref({});
 const produtos = ref();
@@ -235,6 +223,9 @@ const produtoEditar = ref(null);
 const barraPesquisa = ref("");
 const produtosOriginais = ref([]);
 const produtosParaRemover = ref([]);
+const viewTelaPagamento = ref(false);
+const dadosPagamentoVar = ref();
+
 async function informacoesUsuarios() {
   const userInfo = await userInfos.getUserInfos();
 
@@ -283,6 +274,8 @@ async function confirmarRemocaoProdutos() {
   if (response.status === 200) {
     alert("Produtos removidos com sucesso");
     produtosParaRemover.value = [];
+    await carrinho.getCarrinho();
+    novoProduto.value = true;
     await carregarCards();
   } else {
     alert("Ouve algum erro para remover!");
@@ -318,10 +311,11 @@ function expandir(produto) {
   cardExpandido.value = true;
 }
 function abrircarrinho(dados) {
-  abrir.value = dados;
-  console.log(abrir.value);
+  abrir.value = !abrir.value;
 }
-
+watch(viewTelaPagamento, (newVal) => {
+  console.log("TelaPagamento visível:", newVal);
+});
 watch(barraPesquisa, (newValue) => {
   if (newValue && newValue.trim()) {
     produtos.value = produtosOriginais.value.filter((produto) =>

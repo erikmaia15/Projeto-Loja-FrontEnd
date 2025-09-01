@@ -57,9 +57,6 @@ export default {
       } else {
         console.warn("Nenhuma imagem foi fornecida");
       }
-
-      // 4. Enviar com headers corretos
-      console.log(formData);
       const response = await api.put("/produtos", formData);
       return response;
     } catch (error) {

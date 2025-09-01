@@ -1,13 +1,17 @@
 <template>
-  <Navbar url="contatos" @carrinho="abrircarrinho($event)"></Navbar>
+  <Navbar
+    url="contatos"
+    @carrinho="abrircarrinho($event)"
+    :novo-produto="novoProduto"
+  ></Navbar>
   <br />
   <br />
   <br />
   <br />
   <br />
   <Carrinho
-    @removido="true"
-    @fechar="abrir = false"
+    @removido="novoProduto = true"
+    @fechar="abrir = !abrir"
     v-if="abrir === true"
   ></Carrinho>
 
@@ -17,9 +21,7 @@
         <span class="title-icon">👥</span>
         Clientes do E-commerce
       </h1>
-      <p class="page-subtitle">
-        Gerencie e visualize informações dos seus clientes
-      </p>
+      <p class="page-subtitle">Gerencie e visualize informações dos seus clientes</p>
     </div>
 
     <div class="stats-cards">
@@ -127,10 +129,10 @@ const usuariosArray = ref([]);
 const abrir = ref(false);
 const searchTerm = ref("");
 const selectedUser = ref(null);
+const novoProduto = ref(false);
 
 function abrircarrinho(dados) {
-  abrir.value = dados;
-  console.log(abrir.value);
+  abrir.value = !abrir.value;
 }
 
 // Computed properties
@@ -146,10 +148,7 @@ const filteredUsers = computed(() => {
 
 const totalCompras = computed(() => {
   return (
-    usuariosArray.value?.reduce(
-      (total, user) => total + (user.qtdCompras || 2),
-      0
-    ) || 0
+    usuariosArray.value?.reduce((total, user) => total + (user.qtdCompras || 2), 0) || 0
   );
 });
 

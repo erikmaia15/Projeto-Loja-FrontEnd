@@ -1,5 +1,9 @@
 <template>
-  <Navbar url="contatos" @carrinho="abrircarrinho($event)"></Navbar>
+  <Navbar
+    url="contatos"
+    @carrinho="abrircarrinho($event)"
+    :novoProduto="novoProduto"
+  ></Navbar>
   <br />
   <br />
   <br />
@@ -12,9 +16,7 @@
     <div class="hero-content">
       <div class="hero-text">
         <h1 class="hero-title">Sobre a Maia Store</h1>
-        <p class="hero-subtitle">
-          Sua loja de moda feminina em Jaguaruana, Ceará
-        </p>
+        <p class="hero-subtitle">Sua loja de moda feminina em Jaguaruana, Ceará</p>
       </div>
     </div>
   </section>
@@ -46,10 +48,10 @@
           </div>
           <h2 class="card-title">Nossa História</h2>
           <p class="card-text">
-            A Maia Store nasceu do sonho de oferecer moda feminina de qualidade
-            e estilo único para as mulheres de Jaguaruana e região. Com muito
-            amor e dedicação, nossa loja se tornou referência em peças que
-            valorizam a beleza e personalidade de cada cliente.
+            A Maia Store nasceu do sonho de oferecer moda feminina de qualidade e estilo
+            único para as mulheres de Jaguaruana e região. Com muito amor e dedicação,
+            nossa loja se tornou referência em peças que valorizam a beleza e
+            personalidade de cada cliente.
           </p>
         </div>
       </div>
@@ -79,11 +81,10 @@
             <h2 class="founder-name">Erika Maia</h2>
             <p class="founder-role">Fundadora & CEO</p>
             <p class="founder-description">
-              Apaixonada por moda e empreendedorismo, Erika Maia criou a Maia
-              Store com o objetivo de democratizar o acesso à moda feminina de
-              qualidade. Com olhar atento às tendências e às necessidades das
-              clientes, ela cuida pessoalmente de cada detalhe da loja, desde a
-              seleção das peças até o atendimento.
+              Apaixonada por moda e empreendedorismo, Erika Maia criou a Maia Store com o
+              objetivo de democratizar o acesso à moda feminina de qualidade. Com olhar
+              atento às tendências e às necessidades das clientes, ela cuida pessoalmente
+              de cada detalhe da loja, desde a seleção das peças até o atendimento.
             </p>
           </div>
         </div>
@@ -111,9 +112,8 @@
             </div>
             <h3 class="mission-title">Missão</h3>
             <p class="mission-text">
-              Proporcionar às mulheres peças de moda que expressem sua
-              personalidade e as façam se sentir confiantes e belas em qualquer
-              ocasião.
+              Proporcionar às mulheres peças de moda que expressem sua personalidade e as
+              façam se sentir confiantes e belas em qualquer ocasião.
             </p>
           </div>
 
@@ -136,9 +136,8 @@
             </div>
             <h3 class="mission-title">Visão</h3>
             <p class="mission-text">
-              Ser reconhecida como a principal referência em moda feminina no
-              interior do Ceará, oferecendo sempre as melhores tendências com
-              preços acessíveis.
+              Ser reconhecida como a principal referência em moda feminina no interior do
+              Ceará, oferecendo sempre as melhores tendências com preços acessíveis.
             </p>
           </div>
 
@@ -155,16 +154,13 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <polygon
-                  points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"
-                ></polygon>
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
               </svg>
             </div>
             <h3 class="mission-title">Valores</h3>
             <p class="mission-text">
-              Qualidade, autenticidade, atendimento personalizado e
-              comprometimento com a satisfação das nossas clientes são os
-              pilares da Maia Store.
+              Qualidade, autenticidade, atendimento personalizado e comprometimento com a
+              satisfação das nossas clientes são os pilares da Maia Store.
             </p>
           </div>
         </div>
@@ -193,9 +189,9 @@
             <h2 class="location-title">Nossa Localização</h2>
             <p class="location-text">
               Estamos localizados no coração de
-              <strong>Jaguaruana, Ceará</strong>, uma cidade acolhedora que nos
-              permite estar próximas das nossas clientes e oferecer um
-              atendimento personalizado e humanizado.
+              <strong>Jaguaruana, Ceará</strong>, uma cidade acolhedora que nos permite
+              estar próximas das nossas clientes e oferecer um atendimento personalizado e
+              humanizado.
             </p>
             <div class="location-features">
               <div class="feature-item">
@@ -216,8 +212,8 @@
   </section>
 
   <Carrinho
-    @removido="true"
-    @fechar="abrir = false"
+    @removido="novoProduto = true"
+    @fechar="abrir = !abrir"
     v-if="abrir === true"
   ></Carrinho>
   <Footer></Footer>
@@ -232,6 +228,7 @@ import Carrinho from "../componentes/carrinho.vue";
 import Footer from "../componentes/footer.vue";
 const abrir = ref(false);
 const isAdmin = ref(false);
+const novoProduto = ref(false);
 async function userIsAdmin() {
   const response = await userInfos.getUserInfos();
   if (response.status >= 200 && response.status <= 300) {
@@ -243,8 +240,7 @@ async function userIsAdmin() {
 }
 
 function abrircarrinho(dados) {
-  abrir.value = dados;
-  console.log(abrir.value);
+  abrir.value = !abrir.value;
 }
 onMounted(() => {
   userIsAdmin();
@@ -259,8 +255,7 @@ onMounted(() => {
 }
 
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* Hero Section */
