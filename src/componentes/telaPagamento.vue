@@ -2,6 +2,9 @@
   <section class="main-payment">
     <form id="form-checkout">
       <div class="card-header">
+        <p style="color: aliceblue">
+          Valor da compra: {{ props.dadosPagamento.valorCompra }} 💵
+        </p>
         <button class="btn-fechar" @click="fecharCard">
           <span>&times;</span>
         </button>
@@ -31,6 +34,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { loadMercadoPago } from "@mercadopago/sdk-js";
 import paymentService from "../../service/payment";
 const emit = defineEmits(["fechar-tela-pagamento"]);
+const descricaoProdutos = ref([]);
 const props = defineProps({
   dadosPagamento: Object,
 });
@@ -50,8 +54,10 @@ async function realizarCompra(dados, dadosProdutos) {
     alert(
       "Compra foi efetuada e está sob análise, para mais informações vá em minhas compras!"
     );
+    fecharCard();
   } else {
     alert("Compra negada, tente novamente em pelo menos 1 minuto!");
+    fecharCard();
   }
 }
 async function iniciarForm() {
@@ -59,7 +65,9 @@ async function iniciarForm() {
     cardForm.unmount();
     cardForm = null;
   }
-
+  props.dadosPagamento.carrinho.map((produto) => {
+    descricaoProdutos.value.push(produto.tituloProduto);
+  });
   await loadMercadoPago();
   const mp = new window.MercadoPago(import.meta.env.VITE_PUBLIC_KEY_MP_TEST, {
     locale: "pt-BR",
@@ -130,7 +138,7 @@ async function iniciarForm() {
             payment_method_id,
             transaction_amount: Number(amount),
             installments: Number(installments),
-            description: "Descrição do produto",
+            description: descricaoProdutos.value,
             payer: {
               email,
               identification: {
@@ -176,12 +184,12 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -50%);
 }
 .card-header {
-  position: sticky;
   top: 0;
   background: linear-gradient(135deg, #880093, #aa1bb8);
   padding: 15px 20px;
   display: flex;
-  justify-content: flex-end;
+  flex-direction: row;
+  justify-content: space-between !important;
   border-radius: 24px 24px 0 0;
   z-index: 10;
 }
@@ -274,6 +282,7 @@ onBeforeUnmount(() => {
 
 .input-group label {
   display: block;
+  padding: 10px;
   margin-bottom: 8px;
   font-weight: 600;
   color: #760980;
@@ -303,7 +312,7 @@ select {
   height: 48px;
   border: 1px solid #d9c5f4;
   border-radius: 12px;
-  padding: 0 15px;
+  padding: 0 20px;
   font-size: 16px;
   background: white;
   transition: all 0.3s ease;

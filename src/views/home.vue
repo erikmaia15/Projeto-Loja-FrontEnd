@@ -38,13 +38,25 @@
       </div>
       <div class="carousel-inner">
         <div class="carousel-item active">
-          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
+          <img
+            src="../assets/controleProduto.png"
+            class="d-block w-100"
+            alt="..."
+          />
         </div>
         <div class="carousel-item">
-          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
+          <img
+            src="../assets/controleProduto.png"
+            class="d-block w-100"
+            alt="..."
+          />
         </div>
         <div class="carousel-item">
-          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
+          <img
+            src="../assets/controleProduto.png"
+            class="d-block w-100"
+            alt="..."
+          />
         </div>
       </div>
       <button
@@ -68,14 +80,15 @@
     </div>
     <div class="description-container">
       <p class="text-descricao">
-        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por Erik,
-        apaixonado por tecnologia e inovação! Aqui, você encontra uma ampla variedade de
-        produtos eletrônicos, desde os mais essenciais até os mais modernos lançamentos do
-        mercado. Trabalhamos para oferecer qualidade, confiança e praticidade em cada
-        compra. Nosso objetivo é facilitar sua vida com tecnologia acessível, com um
-        atendimento rápido e um site simples e seguro de navegar. 🚀 Por que escolher a
-        nossa loja? Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰
-        Entrega rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
+        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por
+        Erik, apaixonado por tecnologia e inovação! Aqui, você encontra uma
+        ampla variedade de produtos eletrônicos, desde os mais essenciais até os
+        mais modernos lançamentos do mercado. Trabalhamos para oferecer
+        qualidade, confiança e praticidade em cada compra. Nosso objetivo é
+        facilitar sua vida com tecnologia acessível, com um atendimento rápido e
+        um site simples e seguro de navegar. 🚀 Por que escolher a nossa loja?
+        Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰 Entrega
+        rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
         para quem busca praticidade e tecnologia no dia a dia.
       </p>
     </div>
@@ -121,7 +134,11 @@
           </button>
         </div>
         <div class="card-image" @click="expandir(produto)">
-          <img :src="produto.imagem" class="product-image" alt="Imagem do produto" />
+          <img
+            :src="produto.imagem"
+            class="product-image"
+            alt="Imagem do produto"
+          />
         </div>
         <div class="card-body">
           <div class="card-info" @click="expandir(produto)">
@@ -143,7 +160,11 @@
           </button>
           <br />
           <div class="editAdmin">
-            <button class="btn-add-cart" v-if="isAdmin" @click="editarProduto(produto)">
+            <button
+              class="btn-add-cart"
+              v-if="isAdmin"
+              @click="editarProduto(produto)"
+            >
               Editar
             </button>
           </div>
@@ -161,7 +182,9 @@
       <button @click="confirmarRemocaoProdutos" class="btn-confirmar-remocao">
         Confirmar remoção ({{ produtosParaRemover.length }} produtos)
       </button>
-      <button @click="cancelarRemocao" class="btn-cancelar-remocao">Cancelar</button>
+      <button @click="cancelarRemocao" class="btn-cancelar-remocao">
+        Cancelar
+      </button>
     </div>
   </section>
 
@@ -533,6 +556,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 400px;
+  max-width: 40vw;
 }
 
 .product-card:hover {
@@ -682,12 +706,17 @@ input:focus {
 
   .cards-container {
     grid-template-columns: 1fr;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 20px;
     padding: 0 10px;
   }
 
   .product-card {
     min-height: auto;
+    max-width: 80vw;
   }
 
   .card-image {

@@ -6,6 +6,7 @@ import areaDoAdministrador from "../src/views/areaDoAdministrador.vue";
 import NotFound from "../src/views/pagenotfound.vue";
 import userInfos from "../utils/userInfos";
 import Sobre from "../src/views/sobre.vue";
+import MinhasCompras from "../src/views/minhasCompras.vue";
 
 const routes = [
   {
@@ -32,6 +33,11 @@ const routes = [
     path: "/sobre",
     name: "sobre",
     component: Sobre,
+  },
+  {
+    path: "/minhas-compras",
+    name: "minhas-compras",
+    component: MinhasCompras,
   },
   {
     path: "/area-do-administrador",

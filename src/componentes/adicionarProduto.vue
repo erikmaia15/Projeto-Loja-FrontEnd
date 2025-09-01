@@ -70,7 +70,7 @@
           <div class="form-section">
             <h3 class="section-title">
               <span class="section-icon">💰</span>
-              Preço e Estoque
+              Preço, numeração e estoque
             </h3>
 
             <div class="form-row">

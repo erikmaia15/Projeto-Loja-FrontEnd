@@ -9,7 +9,7 @@
       <!-- Menu hamburger para mobile -->
       <div
         class="menu-icon"
-        v-if="tamTela <= 744"
+        v-if="tamTela <= 1030"
         @click="toggleMenuResponsivo"
         :class="{ active: menuResponsivoAberto }"
       >
@@ -19,9 +19,10 @@
       </div>
 
       <!-- Menu normal para desktop -->
-      <ul class="rotas-normal" v-if="tamTela > 744">
+      <ul class="rotas-normal" v-if="tamTela > 1031">
         <li @click="rotas.push('/home')" href="#">Home</li>
         <li @click="rotas.push('/sobre')">Sobre</li>
+        <li @click="rotas.push('/minhas-compras')">Minhas Compras</li>
         <li @click="rotas.push('/area-do-administrador')" v-if="isAdmin">
           Área do Administrador
         </li>
@@ -61,6 +62,10 @@
         <li @click="navegarPara('/area-do-administrador')" v-if="isAdmin">
           <span class="menu-icon-item">⚙️</span>
           Área do Administrador
+        </li>
+        <li @click="navegarPara('/minhas-compras')">
+          <span class="menu-icon-item">🛍️</span>
+          Minhas Compras
         </li>
         <li class="carrinho-mobile" @click="abrircarrinho">
           <div class="carrinho-container">
@@ -150,7 +155,7 @@ function navegarPara(rota) {
 
 // Fechar menu ao redimensionar para desktop
 watch(tamTela, (novoTamanho) => {
-  if (novoTamanho > 744) {
+  if (novoTamanho > 1031) {
     menuResponsivoAberto.value = false;
   }
 });
@@ -420,7 +425,7 @@ watch(
 }
 
 /* Media Queries */
-@media (max-width: 744px) {
+@media (max-width: 1031px) {
   .menu-icon {
     display: flex;
   }
