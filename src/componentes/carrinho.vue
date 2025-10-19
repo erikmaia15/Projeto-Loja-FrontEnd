@@ -32,7 +32,9 @@
               <h4 class="produto-titulo">{{ produto.tituloProduto }}</h4>
               <p class="produto-descricao">{{ produto.descricao }}</p>
               <div class="produto-preco-container">
-                <span class="produto-preco">R$ {{ produto.precoCentavos }}</span>
+                <span class="produto-preco"
+                  >R$ {{ produto.precoCentavos }}</span
+                >
               </div>
             </div>
 
@@ -46,7 +48,10 @@
                   -
                 </button>
                 <span class="quantidade">{{ getQuantidade(produto) }}</span>
-                <button class="btn-quantidade" @click="aumentarQuantidade(produto)">
+                <button
+                  class="btn-quantidade"
+                  @click="aumentarQuantidade(produto)"
+                >
                   +
                 </button>
               </div>
@@ -84,7 +89,9 @@
           <button class="btn-continuar" @click="continuarComprando">
             Continuar Comprando
           </button>
-          <button class="btn-finalizar" @click="finalizarPedido">Finalizar Pedido</button>
+          <button class="btn-finalizar" @click="finalizarPedido">
+            Finalizar Pedido
+          </button>
         </div>
       </div>
     </div>
@@ -95,8 +102,14 @@
 import { onMounted, ref, computed } from "vue";
 import carrinho from "../../service/carrinho";
 import conversao from "../../utils/conversao.js";
-const emit = defineEmits(["fechar", "removido", "tela-pagamento", "dados-pagamento"]);
+const emit = defineEmits([
+  "fechar",
+  "removido",
+  "tela-pagamento",
+  "dados-pagamento",
+]);
 const carBuy = ref([]);
+const compras = ref([]);
 const quantidades = ref({});
 
 // Computed para calcular o total de itens
@@ -124,6 +137,7 @@ async function getCarrinho() {
     const response = await carrinho.getCarrinho();
     if (response) {
       carBuy.value = response;
+      console.log(carBuy.value);
       carBuy.value.map((produto) => {
         if (!quantidades.value[produto.id]) {
           quantidades.value[produto.id] = 1;
@@ -173,8 +187,15 @@ function continuarComprando() {
 }
 
 function finalizarPedido() {
+  carBuy.value.map((produto) => {
+    const modelo = {
+      produto: produto,
+      quantidadeComprado: quantidades.value[produto.id],
+    };
+    compras.value.push(modelo);
+  });
   emit("dados-pagamento", {
-    carrinho: carBuy.value,
+    compras: compras.value,
     valorCompra: valorTotal.value,
   });
   emit("tela-pagamento");

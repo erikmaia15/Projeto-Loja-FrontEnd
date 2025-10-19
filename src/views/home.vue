@@ -237,7 +237,7 @@ import carrinho from "../../service/carrinho.js";
 import TelaPagamento from "../componentes/telaPagamento.vue";
 const url = ref("home");
 const dadosProduto = ref({});
-const produtos = ref();
+const produtos = ref([]);
 const abrir = ref(false);
 const isAdmin = ref(false);
 const novoProduto = ref(false);
@@ -311,7 +311,14 @@ async function carregarCards() {
   try {
     const response = await ProdutosService.getAllProdutos();
     if (response.status >= 200 && response.status <= 300) {
-      produtos.value = response.data.produtos;
+      if (isAdmin.value == true) {
+        produtos.value = response.data.produtos;
+        console.log(produtos.value);
+      } else {
+        produtos.value = response.data.produtos.filter(
+          (produto) => produto.QtdEstoque > 0
+        );
+      }
       produtosOriginais.value = produtos.value;
     } else {
       alert(response.data.message);

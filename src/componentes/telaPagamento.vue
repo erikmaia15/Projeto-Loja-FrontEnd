@@ -9,26 +9,130 @@
           <span>&times;</span>
         </button>
       </div>
-      <span>5031 4332 1540 6351</span>
-      <div id="form-checkout__cardNumber" class="container"></div>
-      <span> 11/30</span>
-      <div id="form-checkout__expirationDate" class="container"></div>
-      <span>123</span>
-      <div id="form-checkout__securityCode" class="container"></div>
 
-      <input type="text" id="form-checkout__cardholderName" />
-      <select id="form-checkout__issuer"></select>
-      <select id="form-checkout__installments"></select>
-      <select id="form-checkout__identificationType"></select>
-      <span>12345678909</span>
-      <input type="text" id="form-checkout__identificationNumber" />
-      <span>erik.maia15oliveira@gmail.com</span>
-      <input type="email" id="form-checkout__cardholderEmail" />
+      <div class="payment-container">
+        <div class="payment-header">
+          <h2 class="payment-title">Pagamento Seguro</h2>
+          <div class="payment-icons">
+            <span class="payment-icon">🔒</span>
+            <span class="payment-icon">💳</span>
+          </div>
+        </div>
 
-      <button type="submit" id="form-checkout__submit">Pagar</button>
+        <div class="form-section">
+          <h3 class="section-title">Dados do Cartão</h3>
+
+          <div class="input-group">
+            <label for="form-checkout__cardNumber">Número do Cartão</label>
+            <div class="input-with-hint">
+              <div id="form-checkout__cardNumber" class="container"></div>
+              <span class="hint-text">Ex: 5031 4332 1540 6351</span>
+            </div>
+          </div>
+
+          <div class="card-details-grid">
+            <div class="input-group">
+              <label for="form-checkout__expirationDate">Validade</label>
+              <div class="input-with-hint">
+                <div id="form-checkout__expirationDate" class="container"></div>
+                <span class="hint-text">Ex: 11/30</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="form-checkout__securityCode">CVV</label>
+              <div class="input-with-hint">
+                <div id="form-checkout__securityCode" class="container"></div>
+                <span class="hint-text">Ex: 123</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="form-checkout__cardholderName">Nome no Cartão</label>
+            <input
+              type="text"
+              id="form-checkout__cardholderName"
+              class="styled-input"
+            />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Informações Adicionais</h3>
+
+          <div class="input-group">
+            <label for="form-checkout__issuer">Banco Emissor</label>
+            <select id="form-checkout__issuer" class="styled-select"></select>
+          </div>
+
+          <div class="input-group">
+            <label for="form-checkout__installments">Parcelas</label>
+            <select
+              id="form-checkout__installments"
+              class="styled-select"
+            ></select>
+          </div>
+
+          <div class="identification-grid">
+            <div class="input-group">
+              <label for="form-checkout__identificationType"
+                >Tipo de Documento</label
+              >
+              <select
+                id="form-checkout__identificationType"
+                class="styled-select"
+              ></select>
+            </div>
+
+            <div class="input-group">
+              <label for="form-checkout__identificationNumber"
+                >Número do Documento</label
+              >
+              <div class="input-with-hint">
+                <input
+                  type="text"
+                  id="form-checkout__identificationNumber"
+                  class="styled-input"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="form-checkout__cardholderEmail">E-mail</label>
+            <div class="input-with-hint">
+              <input
+                type="email"
+                id="form-checkout__cardholderEmail"
+                class="styled-input"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="payment-footer">
+          <button
+            type="submit"
+            id="form-checkout__submit"
+            class="submit-button"
+          >
+            <span class="button-text">Finalizar Pagamento</span>
+            <span class="button-icon">💳</span>
+          </button>
+
+          <div class="security-notice">
+            <span class="security-icon">🔒</span>
+            <span class="security-text"
+              >Pagamento 100% seguro via Mercado Pago</span
+            >
+          </div>
+        </div>
+      </div>
     </form>
   </section>
 </template>
+
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { loadMercadoPago } from "@mercadopago/sdk-js";
@@ -65,8 +169,9 @@ async function iniciarForm() {
     cardForm.unmount();
     cardForm = null;
   }
-  props.dadosPagamento.carrinho.map((produto) => {
-    descricaoProdutos.value.push(produto.tituloProduto);
+
+  props.dadosPagamento.compras.map((produto) => {
+    descricaoProdutos.value.push(produto.produto.tituloProduto);
   });
   await loadMercadoPago();
   const mp = new window.MercadoPago(import.meta.env.VITE_PUBLIC_KEY_MP_TEST, {
@@ -83,15 +188,15 @@ async function iniciarForm() {
       },
       expirationDate: {
         id: "form-checkout__expirationDate",
-        placeholder: "MM/YY",
+        placeholder: "MM/AA",
       },
       securityCode: {
         id: "form-checkout__securityCode",
-        placeholder: "Código de segurança",
+        placeholder: "CVV",
       },
       cardholderName: {
         id: "form-checkout__cardholderName",
-        placeholder: "Titular do cartão",
+        placeholder: "Nome como está no cartão",
       },
       issuer: {
         id: "form-checkout__issuer",
@@ -99,7 +204,7 @@ async function iniciarForm() {
       },
       installments: {
         id: "form-checkout__installments",
-        placeholder: "Parcelas",
+        placeholder: "Número de parcelas",
       },
       identificationType: {
         id: "form-checkout__identificationType",
@@ -111,7 +216,7 @@ async function iniciarForm() {
       },
       cardholderEmail: {
         id: "form-checkout__cardholderEmail",
-        placeholder: "E-mail",
+        placeholder: "Seu e-mail",
       },
     },
     callbacks: {
@@ -154,7 +259,6 @@ async function iniciarForm() {
   });
 }
 onMounted(() => {
-  console.log(props.dadosPagamento.valorCompra.replace(",", "."));
   setTimeout(() => {
     iniciarForm();
   }, 100);
@@ -167,6 +271,7 @@ onBeforeUnmount(() => {
   }
 });
 </script>
+
 <style scoped>
 .main-payment {
   display: flex;
@@ -176,22 +281,48 @@ onBeforeUnmount(() => {
   max-width: 100vw;
   height: 100%;
   max-height: 100vh;
-  background-color: black;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  z-index: 10000;
+  padding: 20px;
 }
-.card-header {
-  top: 0;
-  background: linear-gradient(135deg, #880093, #aa1bb8);
-  padding: 15px 20px;
+
+#form-checkout {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between !important;
-  border-radius: 24px 24px 0 0;
-  z-index: 10;
+  flex-direction: column;
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  max-height: 90vh;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f4ff 100%);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(106, 44, 248, 0.25);
+  overflow: hidden;
+  position: relative;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #8a2be2 0%, #6a0dad 100%);
+  padding: 20px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+}
+
+.card-header p {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-fechar {
@@ -203,7 +334,7 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   cursor: pointer;
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 300;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,90 +346,106 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1);
 }
-#form-checkout {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  z-index: 1000;
-  max-width: 480px;
-  height: 100%;
-  max-height: 80vh;
-  background: linear-gradient(135deg, #f9f5ff 0%, #ffffff 100%);
-  border-radius: 24px;
-  box-shadow: 0 15px 35px rgba(106, 44, 248, 0.15);
-  overflow: hidden;
+
+.payment-container {
   padding: 0;
-  color: #333;
+  overflow-y: auto;
+  max-height: calc(90vh - 80px);
 }
 
-/* Cabeçalho */
-.card-header {
-  background: linear-gradient(135deg, #ec2bfe 0%, #aa1bb8 100%);
-  padding: 10px;
+.payment-header {
+  padding: 25px 25px 15px;
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  border-radius: 24px 24px 0 0;
 }
 
-.btn-fechar {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 30px;
+.payment-title {
+  color: #2d3748;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.payment-icons {
+  display: flex;
+  gap: 10px;
+}
+
+.payment-icon {
+  font-size: 20px;
+  opacity: 0.7;
+}
+
+.form-section {
+  padding: 20px 25px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.section-title {
+  color: #4a5568;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+  gap: 8px;
 }
 
-.btn-fechar:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+.section-title::before {
+  content: "•";
+  color: #8a2be2;
+  font-size: 20px;
 }
 
-/* Conteúdo do formulário */
-.form-content {
-  padding: 30px;
-}
-
-/* Campos do cartão - agrupamento visual */
-.card-data-group {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 15px;
-  margin-bottom: 25px;
-}
-
-/* Campos de entrada */
 .input-group {
   margin-bottom: 20px;
 }
 
+.input-group:last-child {
+  margin-bottom: 0;
+}
+
 .input-group label {
   display: block;
-  padding: 10px;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #760980;
+  color: #4a5568;
   font-size: 14px;
 }
 
+.input-with-hint {
+  position: relative;
+}
+
+.hint-text {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #a0aec0;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
 .container {
-  height: 50px;
-  border: 1px solid #d9c5f4;
+  height: 52px;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
   padding: 0 15px;
   background: white;
   display: flex;
   align-items: center;
   transition: all 0.3s ease;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .container:focus-within {
@@ -306,92 +453,187 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
 }
 
-input,
-select {
+.styled-input,
+.styled-select {
   width: 100%;
-  height: 48px;
-  border: 1px solid #d9c5f4;
+  height: 52px;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
   padding: 0 20px;
-  font-size: 16px;
+  font-size: 15px;
   background: white;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  color: #2d3748;
+  font-family: inherit;
 }
 
-input:focus,
-select:focus {
+.styled-input::placeholder,
+.styled-select::placeholder {
+  color: #a0aec0;
+}
+
+.styled-input:focus,
+.styled-select:focus {
   outline: none;
   border-color: #8a2be2;
   box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
 }
 
-/* Estilização dos spans com dados de exemplo */
-/* Botão de pagamento */
-#form-checkout__submit {
-  background: linear-gradient(135deg, #e31ef5 0%, #590460 100%);
+.styled-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 12px;
+  padding-right: 45px;
+}
+
+.card-details-grid,
+.identification-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.payment-footer {
+  padding: 25px;
+  background: linear-gradient(135deg, #f8f4ff 0%, #ffffff 100%);
+  border-top: 1px solid #f0f0f0;
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #8a2be2 0%, #6a0dad 100%);
   color: white;
   border: none;
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 24px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 10px;
-  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.25);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+  margin-bottom: 15px;
 }
 
-#form-checkout__submit:hover {
+.submit-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(138, 43, 226, 0.35);
+  box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
 }
 
-#form-checkout__submit:active {
+.submit-button:active {
   transform: translateY(0);
 }
 
-/* Barra de progresso */
-.progress-bar {
-  width: 100%;
-  height: 6px;
-  margin-top: 20px;
-  border-radius: 3px;
-  overflow: hidden;
-  background-color: #e5d9f9;
+.button-text {
+  font-size: 16px;
 }
 
-.progress-bar::-webkit-progress-value {
-  background: linear-gradient(135deg, #6e2dc4 0%, #8a2be2 100%);
+.button-icon {
+  font-size: 18px;
+}
+
+.security-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #718096;
+  font-size: 13px;
+}
+
+.security-icon {
+  font-size: 14px;
+}
+
+.security-text {
+  font-weight: 500;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#form-checkout {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar personalizado */
+.payment-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.payment-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
   border-radius: 3px;
 }
 
-.progress-bar::-moz-progress-bar {
-  background: linear-gradient(135deg, #6e2dc4 0%, #8a2be2 100%);
+.payment-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
   border-radius: 3px;
 }
 
-/* Títulos e informações */
-.form-title {
-  color: #6e2dc4;
-  text-align: center;
-  margin-bottom: 25px;
-  font-size: 24px;
-  font-weight: 700;
+.payment-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }
 
 /* Responsividade */
 @media (max-width: 520px) {
-  .form-content {
-    padding: 20px;
+  .main-payment {
+    padding: 10px;
   }
 
-  .card-data-group {
+  #form-checkout {
+    max-width: 100%;
+    border-radius: 16px;
+  }
+
+  .card-header {
+    padding: 15px 20px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .payment-header,
+  .form-section,
+  .payment-footer {
+    padding: 15px 20px;
+  }
+
+  .card-details-grid,
+  .identification-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
   }
 
-  .card-number-group {
-    grid-column: 1;
+  .payment-title {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .card-header p {
+    font-size: 16px;
+  }
+
+  .payment-title {
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 15px;
   }
 }
 </style>

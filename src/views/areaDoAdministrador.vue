@@ -21,7 +21,9 @@
         <span class="title-icon">👥</span>
         Clientes do E-commerce
       </h1>
-      <p class="page-subtitle">Gerencie e visualize informações dos seus clientes</p>
+      <p class="page-subtitle">
+        Gerencie e visualize informações dos seus clientes
+      </p>
     </div>
 
     <div class="stats-cards">
@@ -99,8 +101,96 @@
 
           <div class="user-cell user-compras">
             <div class="compras-badge">
-              <span class="compras-number">{{ usuario.qtdCompras || 2 }}</span>
+              <span class="compras-number">{{
+                usuario.compras.length || 0
+              }}</span>
               <span class="compras-label">compras</span>
+            </div>
+          </div>
+
+          <!-- Área expandida para mostrar as compras -->
+          <div
+            class="compras-expandable"
+            v-if="selectedUser?.id === usuario.id"
+          >
+            <div class="compras-container">
+              <div class="compras-header">
+                <h3 class="compras-title">
+                  <span class="compras-icon">📦</span>
+                  Compras de {{ usuario.nome }}
+                </h3>
+                <div class="compras-count">
+                  {{ comprasCliente.length }} pedido(s)
+                </div>
+              </div>
+
+              <div v-if="comprasCliente.length > 0" class="compras-grid">
+                <div
+                  v-for="compra in comprasCliente"
+                  class="compra-card"
+                  :key="compra.id"
+                >
+                  <div class="compra-header">
+                    <div class="compra-info">
+                      <span class="compra-id"
+                        >Pedido #{{ compra.id.slice(0, 8) }}</span
+                      >
+                      <span class="compra-date" v-if="compra.data">{{
+                        formatDate(compra.data)
+                      }}</span>
+                    </div>
+                    <div
+                      class="compra-status"
+                      :class="getStatusClass(compra.status)"
+                    >
+                      {{
+                        compra.status == "approved" ? "aprovado" : "rejeitado"
+                      }}
+                    </div>
+                  </div>
+
+                  <div class="compra-content">
+                    <div class="itens-container">
+                      <div
+                        v-for="item in compra.itens"
+                        :key="item.id"
+                        class="item-card"
+                      >
+                        <div class="item-image">
+                          <img :src="item.imagem" :alt="item.nomeProduto" />
+                        </div>
+                        <div class="item-details">
+                          <h4 class="item-name">{{ item.nomeProduto }}</h4>
+                          <p class="item-description">{{ item.descricao }}</p>
+                          <div class="item-quantity-price">
+                            <span class="item-quantity"
+                              >Quantidade: {{ item.quantidade || 1 }}</span
+                            >
+                            <span class="item-price"
+                              >R$ {{ formatPrice(item.precoUnitario) }}</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="compra-footer">
+                      <div class="total-section">
+                        <span class="total-label">Total:</span>
+                        <span class="total-value"
+                          >R$ {{ calculateTotal(compra.itens) }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="empty-compras">
+                <div class="empty-icon">🛒</div>
+                <h3>Nenhuma compra realizada</h3>
+                <p>Este cliente ainda não fez nenhum pedido</p>
+              </div>
             </div>
           </div>
         </div>
@@ -123,6 +213,8 @@ import usuarios from "../../service/usuarios";
 import Navbar from "../componentes/navbar.vue";
 import Carrinho from "../componentes/carrinho.vue";
 import Footer from "../componentes/footer.vue";
+import compras from "../../service/compras.js";
+import conversao from "../../utils/conversao.js";
 
 const isAdmin = ref(false);
 const usuariosArray = ref([]);
@@ -130,6 +222,7 @@ const abrir = ref(false);
 const searchTerm = ref("");
 const selectedUser = ref(null);
 const novoProduto = ref(false);
+const comprasCliente = ref([]);
 
 function abrircarrinho(dados) {
   abrir.value = !abrir.value;
@@ -147,15 +240,59 @@ const filteredUsers = computed(() => {
 });
 
 const totalCompras = computed(() => {
-  return (
-    usuariosArray.value?.reduce((total, user) => total + (user.qtdCompras || 2), 0) || 0
-  );
+  let qtdCompras = 0;
+  usuariosArray.value.map((user) => {
+    qtdCompras += user.compras.length;
+  });
+  return qtdCompras;
 });
 
 // Funções utilitárias
+const formatPrice = (price) => {
+  return parseFloat(price).toFixed(2).replace(".", ",");
+};
 
-const selectUser = (user) => {
+const formatDate = (dateString) => {
+  if (!dateString) return "Data não disponível";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("pt-BR");
+};
+
+const calculateTotal = (itens) => {
+  const total = itens.reduce((sum, item) => {
+    const quantity = item.quantidade || 1;
+    return sum + parseFloat(item.precoUnitario) * quantity;
+  }, 0);
+  return formatPrice(total);
+};
+
+const getStatusClass = (status) => {
+  const statusMap = {
+    pendente: "status-pending",
+    processando: "status-processing",
+    enviado: "status-shipped",
+    entregue: "status-delivered",
+    cancelado: "status-cancelled",
+  };
+  return statusMap[status.toLowerCase()] || "status-default";
+};
+
+const selectUser = async (user) => {
   selectedUser.value = user;
+  const response = await compras.getComprasCliente(selectedUser.value.id);
+  if (response.status >= 200 && response.status < 300) {
+    comprasCliente.value = response.data.userCompras;
+    console.log(comprasCliente.value);
+    comprasCliente.value.map((compra) => {
+      compra.itens.map((item) => {
+        const response = conversao.centavosParaReais(item.precoUnitario);
+        item.precoUnitario = response;
+      });
+    });
+    console.log(comprasCliente.value);
+  } else {
+    alert("Erro ao buscar compras do usuário!");
+  }
 };
 
 async function verifyAdmin() {
@@ -339,7 +476,7 @@ onMounted(() => {
 
 .table-header-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1.5fr;
+  grid-template-columns: 2fr 2fr 1fr;
   background: #f8f4ff;
   padding: 1.5rem 2rem;
   font-weight: 600;
@@ -360,11 +497,12 @@ onMounted(() => {
 
 .user-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1.5fr;
+  grid-template-columns: 2fr 2fr 1fr;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #f0f0f0;
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
 }
 
 .user-row:hover {
@@ -437,9 +575,243 @@ onMounted(() => {
   opacity: 0.9;
 }
 
-.acesso-text {
-  color: #666;
+/* Nova seção de compras expandida */
+.compras-expandable {
+  grid-column: 1 / -1;
+  margin-top: 1.5rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+.compras-container {
+  background: #f9f7ff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e8d5ff;
+}
+
+.compras-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e8d5ff;
+}
+
+.compras-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6a0dad;
+  font-size: 1.3rem;
+}
+
+.compras-icon {
+  font-size: 1.5rem;
+}
+
+.compras-count {
+  background: #6a0dad;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
   font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.compras-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.compra-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(106, 13, 173, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compra-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(106, 13, 173, 0.15);
+}
+
+.compra-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(90deg, #f8f4ff, #ffffff);
+  border-bottom: 1px solid #e8d5ff;
+}
+
+.compra-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.compra-id {
+  font-weight: 600;
+  color: #333;
+}
+
+.compra-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.compra-status {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-processing {
+  background: #cce7ff;
+  color: #004085;
+}
+
+.status-shipped {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-delivered {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-default {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.compra-content {
+  padding: 1.5rem;
+}
+
+.itens-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.item-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 3px solid #6a0dad;
+}
+
+.item-image {
+  flex-shrink: 0;
+}
+
+.item-image img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.item-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item-name {
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.item-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.item-quantity-price {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.item-quantity {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #6a0dad;
+}
+
+.compra-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px dashed #e8d5ff;
+}
+
+.total-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.total-label {
+  color: #666;
+}
+
+.total-value {
+  font-size: 1.2rem;
+  color: #6a0dad;
+}
+
+.empty-compras {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #666;
+}
+
+.empty-compras .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.empty-compras h3 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.empty-compras p {
+  font-size: 1rem;
+  margin: 0;
 }
 
 .empty-state {
@@ -456,6 +828,20 @@ onMounted(() => {
 .empty-state h3 {
   margin-bottom: 0.5rem;
   color: #333;
+}
+
+/* Animações */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1000px;
+  }
 }
 
 /* Responsividade */
@@ -475,6 +861,20 @@ onMounted(() => {
   .column-header {
     display: none;
   }
+
+  .compra-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .item-card {
+    flex-direction: column;
+  }
+
+  .item-image {
+    align-self: center;
+  }
 }
 
 @media (max-width: 768px) {
@@ -493,6 +893,27 @@ onMounted(() => {
 
   .search-input {
     width: 100%;
+  }
+
+  .compras-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .item-quantity-price {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .compra-footer {
+    justify-content: center;
+  }
+
+  .total-section {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
   }
 }
 </style>

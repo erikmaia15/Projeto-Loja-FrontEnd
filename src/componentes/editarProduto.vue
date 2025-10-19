@@ -135,17 +135,9 @@
                 </div>
 
                 <div v-if="imagePreview" class="image-preview-container">
-                  <img
-                    :src="imagePreview"
-                    alt="Preview"
-                    class="image-preview"
-                  />
+                  <img :src="imagePreview" alt="Preview" class="image-preview" />
                   <div class="image-actions">
-                    <button
-                      type="button"
-                      @click="removeImage"
-                      class="remove-image-btn"
-                    >
+                    <button type="button" @click="removeImage" class="remove-image-btn">
                       <span>🗑️</span>
                       Remover
                     </button>
@@ -204,6 +196,7 @@ const formData = ref({
   descricao: "",
   precoCentavos: "0,0",
   QtdEstoque: 0,
+  imagem: props.produto.imagem,
 });
 function formatarPrecoFunc(event) {
   const precoFormatado = formatarPreco.formatPrice(event);
@@ -219,17 +212,19 @@ watch(
   () => props.produto,
   (newProduto) => {
     if (newProduto) {
+      console.log(newProduto);
       formData.value = {
         id: newProduto.id,
         tituloProduto: newProduto.tituloProduto || "",
         descricao: newProduto.descricao || "",
         precoCentavos: newProduto.precoCentavos || "0,0",
         QtdEstoque: newProduto.QtdEstoque || 0,
+        imagem: newProduto.imagem || "",
       };
 
       // Se o produto tem uma imagem existente, define como preview
-      if (newProduto.imagemUrl) {
-        imagePreview.value = newProduto.imagemUrl;
+      if (newProduto.imagem) {
+        imagePreview.value = newProduto.imagem;
       } else {
         imagePreview.value = null;
         selectedFile.value = null;
@@ -243,7 +238,9 @@ watch(
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
 
-  if (!file) return;
+  if (!file) {
+    return (selectedFile.value = props.produto.imagem);
+  }
 
   // Validar tipo de arquivo
   const validTypes = ["image/jpeg", "image/jpg", "image/png"];
@@ -287,11 +284,11 @@ const fecharForm = () => {
 const handleSubmit = async () => {
   // Calcular precoCentavos a partir do preço em reais
   const dadosParaEnvio = {
-    ...formData.value, // Converte R$ para centavos
-    imagem: selectedFile.value, // Arquivo da imagem para upload
+    ...formData.value,
+    imagem: selectedFile.value,
   };
   const response = await produtos.updateProduto(dadosParaEnvio);
-  if (response.status >= 200 && response.status <= 300) {
+  if (response.status >= 200 && response.status < 300) {
     console.log(response);
     alert("Produto atualizado");
     emit("produto-atualizado", dadosParaEnvio);

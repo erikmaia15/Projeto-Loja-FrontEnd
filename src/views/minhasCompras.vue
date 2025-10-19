@@ -17,115 +17,102 @@
       <p class="page-subtitle">Histórico completo de suas aquisições</p>
     </div>
 
-    <div class="compras-grid">
-      <!-- Card de exemplo 1 -->
-      <div class="card-pay">
-        <div class="card-status approved">
-          <span class="status-badge">Aprovado</span>
-          <span class="purchase-date">15 Ago 2024</span>
-        </div>
-
-        <div class="header-pay">
-          <div class="img-container">
-            <img
-              src="../assets/controleProduto.png"
-              class="img-pay"
-              alt="Produto"
-            />
+    <!-- Lista de compras organizadas -->
+    <div class="compras-list" v-if="compras.length > 0">
+      <div class="compra-card" v-for="compra in compras" :key="compra.id">
+        <!-- Header da compra -->
+        <div class="compra-header">
+          <div class="compra-info">
+            <h3 class="compra-title">Pedido #{{ compra.id.slice(-8) }}</h3>
+            <p class="compra-date">
+              {{ formatarData.formatarData(compra.dataCriado) }}
+            </p>
           </div>
-          <div class="pay-informations">
-            <h3 class="pay-description-product">
-              Controle PlayStation 4 Wireless
-            </h3>
-            <div class="pay-details">
-              <p class="pay-price">R$ 299,90</p>
-              <p class="pay-installments">3x de R$ 99,97</p>
-            </div>
-            <div class="payment-method">
-              <span class="method-icon">💳</span>
-              <span class="method-text">Mastercard •••• 1234</span>
-            </div>
+          <div class="compra-status">
+            <span class="status-badge" :class="compra.status">
+              {{
+                statusTexto(compra.status) == "IN-PROCESS"
+                  ? "em processamento"
+                  : statusTexto(compra.status)
+              }}
+            </span>
+            <p class="compra-total">
+              R$ {{ formatarPreco(compra.valorCentavos) }}
+            </p>
           </div>
         </div>
 
-        <div class="card-footer">
-          <button class="btn-details">Ver Detalhes</button>
-        </div>
-      </div>
-
-      <!-- Card de exemplo 2 -->
-      <div class="card-pay">
-        <div class="card-status pending">
-          <span class="status-badge">Processando</span>
-          <span class="purchase-date">20 Ago 2024</span>
-        </div>
-
-        <div class="header-pay">
-          <div class="img-container">
-            <img
-              src="https://via.placeholder.com/120x120/880093/ffffff?text=Produto"
-              class="img-pay"
-              alt="Produto"
-            />
-          </div>
-          <div class="pay-informations">
-            <h3 class="pay-description-product">Calcinha Pala Alta Premium</h3>
-            <div class="pay-details">
-              <p class="pay-price">R$ 52,22</p>
-              <p class="pay-installments">À vista</p>
-            </div>
-            <div class="payment-method">
-              <span class="method-icon">💳</span>
-              <span class="method-text">Visa •••• 5678</span>
-            </div>
+        <!-- Informações de pagamento -->
+        <div class="payment-info">
+          <div class="payment-method">
+            <span class="method-icon">{{
+              getPaymentIcon(compra.metodoPagamento)
+            }}</span>
+            <span class="method-text">{{
+              formatarMetodoPagamento(compra.metodoPagamento)
+            }}</span>
+            <span class="installments-text" v-if="compra.parcelas > 1">
+              • {{ compra.parcelas }}x de R$
+              {{ formatarPreco(compra.valorCentavos / compra.parcelas) }}
+            </span>
           </div>
         </div>
 
-        <div class="card-footer">
-          <button class="btn-details">Ver Detalhes</button>
-        </div>
-      </div>
-
-      <!-- Card de exemplo 3 -->
-      <div class="card-pay">
-        <div class="card-status rejected">
-          <span class="status-badge">Rejeitado</span>
-          <span class="purchase-date">10 Ago 2024</span>
-        </div>
-
-        <div class="header-pay">
-          <div class="img-container">
-            <img
-              src="https://via.placeholder.com/120x120/880093/ffffff?text=Produto"
-              class="img-pay"
-              alt="Produto"
-            />
-          </div>
-          <div class="pay-informations">
-            <h3 class="pay-description-product">Smartphone Galaxy A54</h3>
-            <div class="pay-details">
-              <p class="pay-price">R$ 1.299,00</p>
-              <p class="pay-installments">12x de R$ 108,25</p>
-            </div>
-            <div class="payment-method">
-              <span class="method-icon">💳</span>
-              <span class="method-text">Mastercard •••• 9012</span>
+        <!-- Lista de itens da compra -->
+        <div class="itens-container">
+          <h4 class="itens-title">
+            Itens do pedido ({{ compra.itens.length }})
+          </h4>
+          <div class="itens-grid">
+            <div class="item-card" v-for="item in compra.itens" :key="item.id">
+              <div class="item-image">
+                <img
+                  :src="item.imagem"
+                  :alt="item.nomeProduto"
+                  class="produto-img"
+                />
+              </div>
+              <div class="item-details">
+                <h5 class="item-name">{{ item.nomeProduto }}</h5>
+                <p class="item-description">{{ item.descricao }}</p>
+                <div class="item-pricing">
+                  <span class="item-quantity">Qtd: {{ item.quantidade }}</span>
+                  <span class="item-price"
+                    >R$ {{ formatarPreco(item.precoUnitario) }}</span
+                  >
+                  <span class="item-subtotal"
+                    >Total: R$ {{ formatarPreco(item.subtotal) }}</span
+                  >
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="card-footer">
-          <button class="btn-details">Ver Detalhes</button>
+        <!-- Footer da compra -->
+        <div class="compra-footer">
+          <button class="btn-details" @click="verDetalhes(compra.id)">
+            Ver Mais Detalhes
+          </button>
+          <button
+            class="btn-track"
+            @click="rastrearPedido(compra.id)"
+            v-if="compra.status === 'pago'"
+          >
+            Rastrear Pedido
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Empty state caso não tenha compras -->
-    <div class="empty-state" v-if="false">
+    <div class="empty-state" v-else>
       <div class="empty-icon">🛒</div>
       <h2>Nenhuma compra realizada</h2>
       <p>Você ainda não fez nenhuma compra. Explore nossos produtos!</p>
-      <button class="btn-shop">Começar a Comprar</button>
+      <button class="btn-shop" @click="$router.push('/home')">
+        Começar a Comprar
+      </button>
     </div>
   </section>
 
@@ -138,25 +125,94 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import Carrinho from "../componentes/carrinho.vue";
 import Navbar from "../componentes/navbar.vue";
 import Footer from "../componentes/footer.vue";
+import comprasService from "../../service/compras.js";
+import formatarData from "../../utils/formatarData.js";
+import conversao from "../../utils/conversao.js";
 
+const compras = ref([]);
 const novoProduto = ref(false);
 const abrir = ref(false);
+
+async function carregarCompras() {
+  const response = await comprasService.getCompras();
+  if (response.status >= 200 && response.status <= 300) {
+    compras.value = response.data.compras;
+    console.log("Compras carregadas:", compras.value);
+  }
+}
 
 function abrircarrinho() {
   abrir.value = !abrir.value;
 }
+
+// Funções utilitárias
+
+function formatarPreco(centavos) {
+  return (centavos / 100).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function statusTexto(status) {
+  const statusMap = {
+    pago: "Pago",
+    pendente: "Pendente",
+    cancelado: "Cancelado",
+    approved: "Aprovado",
+    pending: "Pendente",
+    rejected: "Rejeitado",
+  };
+  return statusMap[status] || status;
+}
+
+function formatarMetodoPagamento(metodo) {
+  const metodoMap = {
+    credit_card: "Cartão de Crédito",
+    debit_card: "Cartão de Débito",
+    pix: "PIX",
+    boleto: "Boleto",
+    account_money: "Saldo Mercado Pago",
+  };
+  return metodoMap[metodo] || metodo;
+}
+
+function getPaymentIcon(metodo) {
+  const iconMap = {
+    credit_card: "💳",
+    debit_card: "💳",
+    pix: "⚡",
+    boleto: "🧾",
+    account_money: "💰",
+  };
+  return iconMap[metodo] || "💳";
+}
+
+function verDetalhes(compraId) {
+  // Implementar navegação para detalhes
+  console.log("Ver detalhes da compra:", compraId);
+}
+
+function rastrearPedido(compraId) {
+  // Implementar rastreamento
+  console.log("Rastrear pedido:", compraId);
+}
+
+onMounted(() => {
+  carregarCompras();
+});
 </script>
 
 <style scoped>
 .compras-container {
   min-height: 100vh;
-
   padding: 2rem;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #c601d1 0%, #580557 50%, #4c0267 100%);
 }
 
 .header-section {
@@ -182,186 +238,253 @@ function abrircarrinho() {
   font-weight: 300;
 }
 
-.compras-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 1.5rem;
-  max-width: 1200px;
+.compras-list {
+  max-width: 1000px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.card-pay {
-  background: linear-gradient(135deg, #4f0754 0%, #a3009e 50%, #860775 100%);
+.compra-card {
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 20px 40px rgba(136, 0, 147, 0.15);
-  border: 1px solid rgba(136, 0, 147, 0.1);
-  transition: all 0.3s ease;
-  position: relative;
   overflow: hidden;
-  color: white;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
-.card-pay::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #880093, #a3009e, #c100a8);
-}
-
-.card-pay:hover {
+.compra-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 25px 50px rgba(136, 0, 147, 0.25);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
-.card-status {
+.compra-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.compra-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.compra-date {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.compra-status {
+  text-align: right;
 }
 
 .status-badge {
+  display: inline-block;
   padding: 0.4rem 1rem;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
 }
 
-.approved .status-badge {
+.status-badge.pago,
+.status-badge.approved {
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
 }
 
-.pending .status-badge {
+.status-badge.pendente,
+.status-badge.pending {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: white;
 }
 
-.rejected .status-badge {
+.status-badge.cancelado,
+.status-badge.rejected {
   background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
 }
 
-.purchase-date {
-  color: white;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.header-pay {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  align-items: center;
-  justify-content: center;
-}
-
-.img-container {
-  flex-shrink: 0;
-  position: relative;
-  border-radius: 20px;
-  background-color: white;
-  object-fit: cover;
-  width: 100%;
-  max-width: 14vw;
-  max-height: 20vh;
-}
-
-.img-pay {
-  border-radius: 12px;
-  object-fit: cover;
-  border: 2px solid rgba(136, 0, 147, 0.1);
-  width: 100%;
-  height: 100%;
-}
-
-.pay-informations {
-  flex: 1;
-  min-width: 0;
-}
-
-.pay-description-product {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
-  margin: 0 0 0.8rem 0;
-  line-height: 1.4;
-}
-
-.pay-details {
-  margin-bottom: 0.8rem;
-}
-
-.pay-price {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 0.2rem 0;
-}
-
-.pay-installments {
-  font-size: 0.9rem;
-  color: white;
+.compra-total {
   margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.payment-info {
+  padding: 1rem 1.5rem;
+  background: rgba(99, 102, 241, 0.05);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .payment-method {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.8rem;
-  color: white;
-  border-radius: 8px;
-  border: 1px solid rgba(136, 0, 147, 0.1);
+  color: #4338ca;
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .method-icon {
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
-.method-text {
+.installments-text {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.itens-container {
+  padding: 1.5rem;
+}
+
+.itens-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.itens-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.item-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(249, 250, 251, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  transition: all 0.2s ease;
+}
+
+.item-card:hover {
+  background: rgba(243, 244, 246, 0.9);
+  transform: translateX(5px);
+}
+
+.item-image {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.produto-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.item-description {
+  margin: 0 0 0.8rem 0;
+  color: #6b7280;
   font-size: 0.85rem;
-  color: white;
+  line-height: 1.4;
+}
+
+.item-pricing {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.item-quantity {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.item-price {
+  color: #374151;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
-.card-footer {
-  display: flex;
-  gap: 0.8rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(136, 0, 147, 0.1);
-  color: white;
+.item-subtotal {
+  color: #059669;
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
-.btn-details {
-  padding: 0.6rem 1.2rem;
+.compra-footer {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(248, 250, 252, 0.5);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.btn-details,
+.btn-track {
+  padding: 0.7rem 1.5rem;
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
-  color: white;
   flex: 1;
 }
 
 .btn-details {
-  background-color: #4f0754;
+  background: linear-gradient(135deg, #aa2ee3, #2e0137);
   color: white;
-  border: 1px solid rgba(136, 0, 147, 0.2);
 }
 
 .btn-details:hover {
-  background: rgba(56, 2, 59, 0.15);
+  background: linear-gradient(135deg, #da04f2, #030014);
   transform: translateY(-1px);
 }
+
+.btn-track {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4338ca;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.btn-track:hover {
+  background: rgba(99, 102, 241, 0.15);
+  transform: translateY(-1px);
+}
+
 .empty-state {
   text-align: center;
   background: rgba(255, 255, 255, 0.95);
@@ -370,7 +493,7 @@ function abrircarrinho() {
   padding: 4rem 2rem;
   max-width: 500px;
   margin: 0 auto;
-  border: 1px solid rgba(136, 0, 147, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .empty-icon {
@@ -392,7 +515,7 @@ function abrircarrinho() {
 }
 
 .btn-shop {
-  background: linear-gradient(135deg, #880093, #a3009e);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -405,7 +528,7 @@ function abrircarrinho() {
 
 .btn-shop:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(136, 0, 147, 0.3);
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
 }
 
 @media (max-width: 768px) {
@@ -413,47 +536,42 @@ function abrircarrinho() {
     padding: 1rem;
   }
 
-  .compras-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
   .page-title {
     font-size: 2rem;
   }
 
-  .header-pay {
-    display: flex;
+  .compra-header {
     flex-direction: column;
-    justify-content: center !important;
+    gap: 1rem;
+  }
+
+  .compra-status {
+    text-align: left;
+  }
+
+  .item-card {
+    flex-direction: column;
     text-align: center;
   }
 
-  .card-footer {
+  .item-image {
+    align-self: center;
+    width: 120px;
+    height: 120px;
+  }
+
+  .item-pricing {
+    justify-content: center;
+  }
+
+  .compra-footer {
     flex-direction: column;
   }
 
-  .img-container {
-    flex-shrink: 0;
-    position: relative;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
+  .payment-method {
+    flex-wrap: wrap;
     justify-content: center;
-    background-color: white;
-    object-fit: cover;
-    max-width: 50vw;
-    max-height: 50vw;
-    width: 100%;
-    height: 100%;
-  }
-
-  .img-pay {
-    border-radius: 12px;
-    object-fit: cover;
-    border: 2px solid rgba(136, 0, 147, 0.1);
-    width: 100%;
-    height: 100%;
+    text-align: center;
   }
 }
 </style>

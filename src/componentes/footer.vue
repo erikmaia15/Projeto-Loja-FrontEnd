@@ -47,9 +47,10 @@
                     src="../assets/whatsapp.png"
                     width="50px"
                     height="50px"
-                    alt=""
+                    alt="whatsapp"
                     srcset=""
-                /></span>
+                  />
+                </span>
               </a>
             </div>
           </div>
