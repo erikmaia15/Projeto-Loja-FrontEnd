@@ -50,11 +50,7 @@
 
           <div class="input-group">
             <label for="form-checkout__cardholderName">Nome no Cartão</label>
-            <input
-              type="text"
-              id="form-checkout__cardholderName"
-              class="styled-input"
-            />
+            <input type="text" id="form-checkout__cardholderName" class="styled-input" />
           </div>
         </div>
 
@@ -68,17 +64,12 @@
 
           <div class="input-group">
             <label for="form-checkout__installments">Parcelas</label>
-            <select
-              id="form-checkout__installments"
-              class="styled-select"
-            ></select>
+            <select id="form-checkout__installments" class="styled-select"></select>
           </div>
 
           <div class="identification-grid">
             <div class="input-group">
-              <label for="form-checkout__identificationType"
-                >Tipo de Documento</label
-              >
+              <label for="form-checkout__identificationType">Tipo de Documento</label>
               <select
                 id="form-checkout__identificationType"
                 class="styled-select"
@@ -86,9 +77,7 @@
             </div>
 
             <div class="input-group">
-              <label for="form-checkout__identificationNumber"
-                >Número do Documento</label
-              >
+              <label for="form-checkout__identificationNumber">Número do Documento</label>
               <div class="input-with-hint">
                 <input
                   type="text"
@@ -112,20 +101,14 @@
         </div>
 
         <div class="payment-footer">
-          <button
-            type="submit"
-            id="form-checkout__submit"
-            class="submit-button"
-          >
+          <button type="submit" id="form-checkout__submit" class="submit-button">
             <span class="button-text">Finalizar Pagamento</span>
             <span class="button-icon">💳</span>
           </button>
 
           <div class="security-notice">
             <span class="security-icon">🔒</span>
-            <span class="security-text"
-              >Pagamento 100% seguro via Mercado Pago</span
-            >
+            <span class="security-text">Pagamento 100% seguro via Mercado Pago</span>
           </div>
         </div>
       </div>
@@ -174,7 +157,7 @@ async function iniciarForm() {
     descricaoProdutos.value.push(produto.produto.tituloProduto);
   });
   await loadMercadoPago();
-  const mp = new window.MercadoPago(import.meta.env.VITE_PUBLIC_KEY_MP_TEST, {
+  const mp = new window.MercadoPago(import.meta.env.VITE_PUBLIC_KEY_MP_PRODUCT, {
     locale: "pt-BR",
   });
   cardForm = mp.cardForm({

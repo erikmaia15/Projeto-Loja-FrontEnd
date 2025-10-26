@@ -2,7 +2,8 @@ import axios from "axios";
 import rotas from "./rotas.js"; // importe seu rotas
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACK_END_URL || "http://localhost:3000",
+  baseURL: import.meta.env.VITE_BACK_END_URL,
+  // baseURL: "http://localhost:3000",
 });
 
 // Interceptor para adicionar o token
