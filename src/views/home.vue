@@ -95,7 +95,27 @@
   </section>
 
   <br />
+
+  <!-- CORREÇÃO PRINCIPAL AQUI: Estrutura das divs de filtro e pesquisa -->
   <div class="table-actions">
+    <div class="filter-categoria">
+      <label for="">Filtrar por categorias: {{ filtroAtivo }}</label>
+      <div class="categorias-container">
+        <div
+          class="categoria-item"
+          v-for="categoria in categorias"
+          :key="categoria.id"
+        >
+          <button id="btn-categoria" @click="filtrarProdutos(categoria)">
+            {{ categoria.nome }}
+          </button>
+        </div>
+      </div>
+    </div>
+    <button type="button" id="btn-categoria" @click="carregarCards(true)">
+      Resetar filtros
+    </button>
+
     <div class="search-container">
       <input
         type="text"
@@ -186,9 +206,34 @@
         Cancelar
       </button>
     </div>
+    <!-- <div v-if="produtos.length == 0">
+      Não há produtos com essa categoria, escolha outra!
+    </div> -->
   </section>
 
-  <section>
+  <section class="telas-root">
+    <!-- Botão para carregar mais produtos -->
+    <button
+      type="button"
+      class="toggle-btn"
+      @click="carregarMaisProdutos"
+      :disabled="!temMaisProdutos"
+      v-if="temMaisProdutos && filtroAtivo === 'Todos os produtos'"
+    >
+      Carregar mais produtos!
+    </button>
+
+    <!-- Mensagem quando não há mais produtos -->
+    <p
+      v-else-if="!temMaisProdutos && produtos.length > 0"
+      class="sem-mais-produtos"
+    >
+      Todos os produtos foram carregados!
+    </p>
+    <p v-else-if="produtos.length == 0" class="sem-mais-produtos">
+      Sem produtos para essa categoria!
+    </p>
+
     <CardExpandido
       @fechar="cardExpandido = false"
       @novoproduto="novoProduto = true"
@@ -235,6 +280,7 @@ import EditarProduto from "../componentes/editarProduto.vue";
 import Footer from "../componentes/footer.vue";
 import carrinho from "../../service/carrinho.js";
 import TelaPagamento from "../componentes/telaPagamento.vue";
+import categoriasService from "../../service/categorias.js";
 const url = ref("home");
 const dadosProduto = ref({});
 const produtos = ref([]);
@@ -248,7 +294,33 @@ const produtosOriginais = ref([]);
 const produtosParaRemover = ref([]);
 const viewTelaPagamento = ref(false);
 const dadosPagamentoVar = ref();
+const categorias = ref([]);
+const filtroAtivo = ref("");
+const paginaAtual = ref(1);
+const tamanhoPagina = ref(8); // ou o tamanho que você preferir
+const temMaisProdutos = ref(true);
+async function filtrarProdutos(categoria) {
+  // Reseta a paginação quando aplicar um filtro
+  paginaAtual.value = 1;
+  temMaisProdutos.value = false;
 
+  filtroAtivo.value = categoria.nome;
+  const response = await categoriasService.getProdutosComCategorias(
+    categoria.id
+  );
+  if (response.status == 200) {
+    produtos.value = response.data.data.produtos;
+    produtosOriginais.value = produtos.value;
+  } else {
+    alert(`Houve algum erro ${response.data.message}`);
+  }
+}
+async function carregarCategorias() {
+  const response = await categoriasService.getCategorias();
+  if (response.status == 200) {
+    categorias.value = response.data.categorias;
+  }
+}
 async function informacoesUsuarios() {
   const userInfo = await userInfos.getUserInfos();
 
@@ -307,25 +379,57 @@ async function confirmarRemocaoProdutos() {
 function editarProduto(produto) {
   produtoEditar.value = produto;
 }
-async function carregarCards() {
+async function carregarCards(reset = false) {
   try {
-    const response = await ProdutosService.getAllProdutos();
+    if (reset) {
+      paginaAtual.value = 1;
+      produtos.value = [];
+      temMaisProdutos.value = true;
+    }
+
+    // Se não há mais produtos, não faz nada
+    if (!temMaisProdutos.value && !reset) return;
+
+    const response = await ProdutosService.getAllProdutos(
+      paginaAtual.value,
+      tamanhoPagina.value
+    );
+
     if (response.status >= 200 && response.status <= 300) {
-      if (isAdmin.value == true) {
-        produtos.value = response.data.produtos;
-        console.log(produtos.value);
+      const novosProdutos = isAdmin.value
+        ? response.data.produtos
+        : response.data.produtos.filter((produto) => produto.QtdEstoque > 0);
+
+      // Se for reset ou primeira página, substitui os produtos
+      if (reset || paginaAtual.value === 1) {
+        produtos.value = novosProdutos;
       } else {
-        produtos.value = response.data.produtos.filter(
-          (produto) => produto.QtdEstoque > 0
-        );
+        // Se for carregar mais, adiciona aos produtos existentes
+        produtos.value = [...produtos.value, ...novosProdutos];
       }
+
       produtosOriginais.value = produtos.value;
+
+      // Verifica se há mais produtos para carregar
+      temMaisProdutos.value = novosProdutos.length === tamanhoPagina.value;
+
+      // Incrementa a página para a próxima requisição
+      if (temMaisProdutos.value) {
+        paginaAtual.value++;
+      }
+
+      filtroAtivo.value = "Todos os produtos";
     } else {
       alert(response.data.message);
     }
   } catch (erro) {
     console.log(erro);
   }
+}
+
+// Função específica para carregar mais produtos
+async function carregarMaisProdutos() {
+  await carregarCards(false);
 }
 async function adicionarCarrinho(produto) {
   const response = await carrinho.postCarrinho(produto);
@@ -357,7 +461,8 @@ watch(barraPesquisa, (newValue) => {
 });
 onMounted(async () => {
   await informacoesUsuarios();
-  carregarCards();
+  await carregarCategorias();
+  carregarCards(true);
 });
 </script>
 
@@ -365,6 +470,63 @@ onMounted(async () => {
 /* Reset e configurações gerais */
 * {
   box-sizing: border-box;
+}
+.telas-root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toggle-btn {
+  background: linear-gradient(135deg, #880093, #aa1bb8);
+  color: white;
+  border: none;
+
+  padding: 15px 25px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(136, 0, 147, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sem-mais-produtos {
+  background: linear-gradient(135deg, #880093, #aa1bb8);
+  padding: 10px;
+  border-radius: 20px;
+  text-align: center;
+  color: white;
+  font-style: italic;
+  margin: 20px 0;
+  font-weight: 600;
+}
+.toggle-btn:hover {
+  background: linear-gradient(135deg, #aa1bb8, #cc44d1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(136, 0, 147, 0.4);
+}
+#btn-categoria {
+  width: fit-content;
+  background: linear-gradient(135deg, #880093, #aa1bb8);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#btn-categoria:hover {
+  background: linear-gradient(135deg, #880093, #8f6493);
 }
 
 li {
@@ -396,8 +558,8 @@ body {
 }
 
 .btn-fechar:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.4);
 }
 
 /* parte para remoção de produto */
@@ -469,9 +631,55 @@ body {
 /* barra de pesquisa */
 .table-actions {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
   align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  margin: 2rem auto;
+  background: linear-gradient(135deg, #880093, #aa1bb8);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(136, 0, 147, 0.3);
+  max-width: 900px;
+  color: white;
+}
+
+/* Título do filtro */
+.filter-categoria label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  display: block;
+  text-align: center;
+}
+
+/* Container das categorias */
+.categorias-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
   justify-content: center;
+}
+
+/* Botões de categoria (reaproveita o id existente) */
+#btn-categoria {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 25px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
+}
+
+#btn-categoria:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 .search-container {
   position: relative;

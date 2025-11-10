@@ -65,6 +65,23 @@
                 <span class="textarea-icon">📄</span>
               </div>
             </div>
+            <div class="form-group">
+              <label for="productDescription" class="form-label">
+                <span class="label-text">Categoria do produto</span>
+                <span class="required-asterisk">*</span>
+              </label>
+              <div class="categorias-container">
+                <div
+                  class="categoria-item"
+                  v-for="categoria in categorias"
+                  :key="categoria.id"
+                >
+                  <button id="btn-categoria" @click="formData.categoria = categoria">
+                    {{ categoria.nome }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="form-section">
@@ -185,13 +202,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import produtos from "../../service/produtos.js";
 import { defineEmits } from "vue";
 import formatarPreco from "../../utils/formatarPreco.js";
+import categoriasService from "../../service/categorias.js";
 
 // Estado do formulário
 const showForm = ref(false);
+const categorias = ref([]);
 function formatarPrecoFunc(event) {
   const numeroFormatado = formatarPreco.formatPrice(event);
   formData.value.precoCentavos = numeroFormatado;
@@ -203,6 +222,10 @@ const formData = ref({
   precoCentavos: "0,0",
   QtdEstoque: 0,
   imagem: null,
+  categoria: {
+    nome: "",
+    id: "",
+  },
 });
 const emit = defineEmits("ProdutoNovo");
 // Referências para o input de arquivo e pré-visualização
@@ -263,6 +286,11 @@ const resetForm = () => {
   };
   removeImage();
 };
+onMounted(async () => {
+  const response = await categoriasService.getCategorias();
+  console.log(response);
+  categorias.value = response.data.categorias;
+});
 </script>
 
 <style scoped>
@@ -455,10 +483,31 @@ const resetForm = () => {
   font-weight: bold;
 }
 
-.input-wrapper {
-  position: relative;
+.categorias-container {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+/* Botões de categoria (reaproveita o id existente) */
+#btn-categoria {
+  background: #880093;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 25px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
+}
+
+#btn-categoria:hover {
+  background: rgba(105, 4, 118, 0.3);
+  transform: translateY(-2px);
 }
 
 .form-input,

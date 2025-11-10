@@ -17,7 +17,7 @@ export default {
       const produtosRemovidos = [];
       const response = await api.get("/usuario-carrinho");
       if (response.status >= 200 && response.status <= 300) {
-        const produtosArray = await produtos.getAllProdutos();
+        const produtosArray = await produtos.getAllProdutos(1, 100000);
         produtosArray.data.produtos.map((produto) => {
           if (response.data.carrinhoIds.includes(produto.id)) {
             carrinho.push(produto);
@@ -38,6 +38,7 @@ export default {
         }
         return carrinho;
       } else {
+        console.log(response);
         return response.data.message;
       }
     } catch (error) {

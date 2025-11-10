@@ -4,7 +4,7 @@
   <main>
     <section class="main">
       <div class="form">
-        <h3>Cadastra-se</h3>
+        <h3>Cadastre-se</h3>
         <form @submit.prevent="dadosUser">
           <input
             type="text"
@@ -18,21 +18,35 @@
             placeholder="Digite seu email:"
             required
           />
-          <input
-            type="password"
-            v-model="inputSenha"
-            placeholder="Digite sua senha:"
-            required
-          />
+
+          <div style="position: relative">
+            <input
+              :type="mostrarSenha ? 'text' : 'password'"
+              v-model="inputSenha"
+              placeholder="Digite sua senha:"
+              required
+            />
+            <img
+              id="img-password"
+              :src="imgPassword"
+              width="25px"
+              height="25px"
+              alt="Mostrar senha"
+              @click="showPassword"
+            />
+          </div>
+
           <input type="submit" value="Cadastrar" />
           <p style="color: white">{{ mensagem }}</p>
+
           <p style="color: aliceblue">
             Já tem cadastro?
             <span
-              @click="cadastrado.push('/login')"
+              @click="rotas.push('/login')"
               style="text-decoration: underline; cursor: pointer"
-              >Clique aqui</span
             >
+              Clique aqui
+            </span>
             para fazer login
           </p>
         </form>
@@ -46,25 +60,35 @@ import Navbar from "../componentes/navbar.vue";
 import autenticacao from "../../service/autenticacao.js";
 import rotas from "../../router/rotas.js";
 import { ref } from "vue";
+
+// Import correto das imagens
+import imgView from "../assets/view.png";
+import imgHidden from "../assets/hidden.png";
+
 const url = ref("cadastro");
 const inputName = ref("");
 const inputEmail = ref("");
 const inputSenha = ref("");
-const cadastrado = rotas;
 const mensagem = ref("");
 
-const user = ref({});
-async function dadosUser(event) {
-  event.preventDefault();
-  user.value = {
+// Estado da senha
+const mostrarSenha = ref(false);
+const imgPassword = ref(imgView);
+
+function showPassword() {
+  mostrarSenha.value = !mostrarSenha.value;
+  imgPassword.value = mostrarSenha.value ? imgHidden : imgView;
+}
+
+async function dadosUser() {
+  const user = {
     nome: inputName.value,
     email: inputEmail.value,
     senha: inputSenha.value,
   };
-  console.log(user.value);
+
   try {
-    const response = await autenticacao.cadastroUsuario(user.value);
-    console.log(response);
+    const response = await autenticacao.cadastroUsuario(user);
     if (response.status >= 200 && response.status <= 300) {
       alert("Usuário cadastrado com sucesso, faça login!");
       rotas.push("/login");
@@ -72,8 +96,11 @@ async function dadosUser(event) {
       mensagem.value = response.data.message;
     }
   } catch (error) {
-    alert(error);
+    alert("Erro ao cadastrar usuário");
+    console.error(error);
   }
+
+  // Limpar campos
   inputName.value = "";
   inputEmail.value = "";
   inputSenha.value = "";
@@ -123,5 +150,9 @@ main {
 .main form input::placeholder {
   color: white;
   opacity: 0.8;
+}
+#img-password {
+  filter: invert();
+  margin-left: -35px;
 }
 </style>

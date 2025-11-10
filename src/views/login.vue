@@ -6,31 +6,67 @@
       <div class="form">
         <h3>Login</h3>
         <form @submit.prevent="validarUser">
-          <input type="email" v-model="email" placeholder="Digite seu email:" required />
           <input
-            type="password"
-            v-model="senha"
-            placeholder="Digite sua senha:"
+            type="email"
+            v-model="email"
+            placeholder="Digite seu email:"
             required
           />
+          <div>
+            <input
+              :type="mostrarSenha ? 'text' : 'password'"
+              v-model="senha"
+              placeholder="Digite sua senha:"
+              required
+            />
+            <label id="img-password">
+              <img
+                :src="imgPassword"
+                width="25px"
+                height="25px"
+                alt="Mostrar senha"
+                @click="showPassword"
+                style="cursor: pointer"
+              />
+            </label>
+          </div>
           <input type="submit" value="Login" />
         </form>
         <p style="text-align: center">{{ mensagem }}</p>
       </div>
+      <p>
+        Não possui cadastro?
+        <span
+          style="text-decoration: underline"
+          @click="router.push('/cadastro')"
+          >clique aqui</span
+        >
+      </p>
     </section>
   </section>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import Navbar from "../componentes/navbar.vue";
 import autenticacao from "../../service/autenticacao";
 import rotas from "../../router/rotas.js";
+import router from "../../router/rotas.js";
+import imgView from "../assets/view.png";
+import imgHidden from "../assets/hidden.png";
 
 const url = ref("login");
 const email = ref("");
 const senha = ref("");
 const mensagem = ref("");
+const mostrarSenha = ref(true);
+const imgPassword = ref(imgView);
+console.log(imgPassword.value);
+
+function showPassword() {
+  mostrarSenha.value = !mostrarSenha.value;
+  imgPassword.value = mostrarSenha.value == true ? imgHidden : imgView;
+}
 
 async function validarUser() {
   try {
@@ -51,6 +87,9 @@ async function validarUser() {
     console.log(error);
   }
 }
+onMounted(() => {
+  showPassword();
+});
 </script>
 
 <style scoped>
@@ -89,6 +128,10 @@ form input {
 form input::placeholder {
   color: white;
   opacity: 0.8;
+}
+#img-password {
+  filter: invert();
+  margin-left: -35px;
 }
 p {
   margin-top: 10px;

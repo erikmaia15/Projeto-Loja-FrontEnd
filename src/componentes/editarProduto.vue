@@ -54,6 +54,31 @@
                 <span class="textarea-icon">📄</span>
               </div>
             </div>
+            <div class="form-group">
+              <span class="label-text"
+                >Categoria antiga: {{ categoriaAntiga }}</span
+              >
+              <label for="productDescription" class="form-label">
+                <span class="label-text"
+                  >Nova categoria: {{ formData.categoria.nome }}</span
+                >
+              </label>
+              <div class="categorias-container">
+                <div
+                  class="categoria-item"
+                  v-for="categoria in categorias"
+                  :key="categoria.id"
+                >
+                  <button
+                    type="button"
+                    id="btn-categoria"
+                    @click="formData.categoria = categoria"
+                  >
+                    {{ categoria.nome }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="form-section">
             <h3 class="section-title">
@@ -135,9 +160,17 @@
                 </div>
 
                 <div v-if="imagePreview" class="image-preview-container">
-                  <img :src="imagePreview" alt="Preview" class="image-preview" />
+                  <img
+                    :src="imagePreview"
+                    alt="Preview"
+                    class="image-preview"
+                  />
                   <div class="image-actions">
-                    <button type="button" @click="removeImage" class="remove-image-btn">
+                    <button
+                      type="button"
+                      @click="removeImage"
+                      class="remove-image-btn"
+                    >
                       <span>🗑️</span>
                       Remover
                     </button>
@@ -174,9 +207,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import produtos from "../../service/produtos";
 import formatarPreco from "../../utils/formatarPreco";
+import categoriasService from "../../service/categorias";
 
 // Props
 const props = defineProps({
@@ -188,6 +222,8 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(["fechar", "produto-atualizado"]);
+const categorias = ref([]);
+const categoriaAntiga = ref("");
 
 // Dados do formulário
 const formData = ref({
@@ -197,6 +233,10 @@ const formData = ref({
   precoCentavos: "0,0",
   QtdEstoque: 0,
   imagem: props.produto.imagem,
+  categoria: {
+    nome: "",
+    id: "",
+  },
 });
 function formatarPrecoFunc(event) {
   const precoFormatado = formatarPreco.formatPrice(event);
@@ -210,9 +250,12 @@ const fileInput = ref(null);
 // Watchers para sincronizar com as props
 watch(
   () => props.produto,
-  (newProduto) => {
+  async (newProduto) => {
     if (newProduto) {
-      console.log(newProduto);
+      const response = await categoriasService.getCategoriaById(
+        newProduto.categoriaId
+      );
+      categoriaAntiga.value = response.data.data.nome;
       formData.value = {
         id: newProduto.id,
         tituloProduto: newProduto.tituloProduto || "",
@@ -220,6 +263,10 @@ watch(
         precoCentavos: newProduto.precoCentavos || "0,0",
         QtdEstoque: newProduto.QtdEstoque || 0,
         imagem: newProduto.imagem || "",
+        categoria: {
+          nome: "",
+          id: newProduto.categoriaId,
+        },
       };
 
       // Se o produto tem uma imagem existente, define como preview
@@ -288,6 +335,7 @@ const handleSubmit = async () => {
     imagem: selectedFile.value,
   };
   const response = await produtos.updateProduto(dadosParaEnvio);
+  console.log(dadosParaEnvio);
   if (response.status >= 200 && response.status < 300) {
     console.log(response);
     alert("Produto atualizado");
@@ -298,9 +346,41 @@ const handleSubmit = async () => {
   }
   fecharForm();
 };
+onMounted(async () => {
+  const response = await categoriasService.getCategorias();
+  console.log(response);
+  categorias.value = response.data.categorias;
+});
 </script>
 
 <style scoped>
+.categorias-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+/* Botões de categoria (reaproveita o id existente) */
+#btn-categoria {
+  background: #880093;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 25px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
+}
+
+#btn-categoria:hover {
+  background: rgba(105, 4, 118, 0.3);
+  transform: translateY(-2px);
+}
+
 .product-edit-form {
   position: relative;
   display: flex;

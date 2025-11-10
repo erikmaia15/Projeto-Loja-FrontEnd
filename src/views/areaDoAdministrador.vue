@@ -26,6 +26,7 @@
       </p>
     </div>
 
+    <!-- Seção de Estatísticas -->
     <div class="stats-cards">
       <div class="stat-card">
         <div class="stat-icon">👤</div>
@@ -42,8 +43,99 @@
           <span class="stat-label">Total de Compras</span>
         </div>
       </div>
+
+      <!-- Nova Estatística de Categorias -->
+      <div class="stat-card" v-if="isAdmin">
+        <div class="stat-icon">📂</div>
+        <div class="stat-content">
+          <span class="stat-number">{{ categorias?.length || 0 }}</span>
+          <span class="stat-label">Categorias</span>
+        </div>
+      </div>
     </div>
 
+    <!-- Seção de Gerenciamento de Categorias (Admin) -->
+    <section class="categorias-section" v-if="isAdmin">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-icon">📂</span>
+          Gerenciar Categorias
+        </h2>
+        <button class="btn-primary" @click="showNovaCategoria = true">
+          <span class="btn-icon">+</span>
+          Nova Categoria
+        </button>
+      </div>
+
+      <div class="categorias-grid">
+        <div
+          v-for="categoria in categorias"
+          :key="categoria.id"
+          class="categoria-card"
+        >
+          <div class="categoria-header">
+            <h3 class="categoria-nome">{{ categoria.nome }}</h3>
+            <div class="categoria-actions">
+              <button
+                class="btn-edit"
+                @click="editarCategoria(categoria)"
+                title="Editar categoria"
+              >
+                ✏️
+              </button>
+              <button
+                class="btn-delete"
+                @click="confirmarExclusaoCategoria(categoria)"
+                title="Excluir categoria"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+          <div class="categoria-info">
+            <span class="categoria-produtos">
+              {{ categoria.quantidadeProdutos }} produtos
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Nova Categoria -->
+      <div v-if="showNovaCategoria" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>{{ categoriaEditando ? "Editar" : "Nova" }} Categoria</h3>
+            <button class="btn-close" @click="fecharModal">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="nomeCategoria">Nome da Categoria:</label>
+              <input
+                type="text"
+                id="nomeCategoria"
+                v-model="novaCategoria.nome"
+                placeholder="Digite o nome da categoria"
+                class="form-input"
+                maxlength="50"
+              />
+              <span class="char-count">{{ novaCategoria.nome.length }}/50</span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" @click="fecharModal">Cancelar</button>
+            <button
+              class="btn-primary"
+              @click="salvarCategoria"
+              :disabled="!novaCategoria.nome.trim()"
+            >
+              {{ categoriaEditando ? "Atualizar" : "Salvar" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção de Lista de Clientes -->
     <section class="usuarios-table">
       <div class="table-header">
         <h2 class="table-title">
@@ -143,9 +235,7 @@
                       class="compra-status"
                       :class="getStatusClass(compra.status)"
                     >
-                      {{
-                        compra.status == "approved" ? "aprovado" : "rejeitado"
-                      }}
+                      {{ getStatusText(compra.status) }}
                     </div>
                   </div>
 
@@ -215,7 +305,9 @@ import Carrinho from "../componentes/carrinho.vue";
 import Footer from "../componentes/footer.vue";
 import compras from "../../service/compras.js";
 import conversao from "../../utils/conversao.js";
+import categoriasService from "../../service/categorias.js";
 
+// Variáveis existentes
 const isAdmin = ref(false);
 const usuariosArray = ref([]);
 const abrir = ref(false);
@@ -224,14 +316,35 @@ const selectedUser = ref(null);
 const novoProduto = ref(false);
 const comprasCliente = ref([]);
 
-function abrircarrinho(dados) {
-  abrir.value = !abrir.value;
-}
+// Novas variáveis para categorias
+const categorias = ref([]);
+const showNovaCategoria = ref(false);
+const categoriaEditando = ref(null);
+const novaCategoria = ref({
+  nome: "",
+  id: "",
+});
 
-// Computed properties
+const categoriasComQuantidade = ref([]);
+
+const carregarCategorias = async () => {
+  const response = await categoriasService.getCategorias();
+  categorias.value = response.data.categorias;
+  for (const categoria of categorias.value) {
+    const response = await categoriasService.getProdutosComCategorias(
+      categoria.id
+    );
+    categoriasComQuantidade.value.push({
+      ...categoria,
+      quantidadeProdutos: response.data.data.produtos.length,
+    });
+  }
+  categorias.value = categoriasComQuantidade.value;
+};
+
+// Computed properties existentes
 const filteredUsers = computed(() => {
   if (!searchTerm.value) return usuariosArray.value || [];
-
   return usuariosArray.value.filter(
     (user) =>
       user.nome.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
@@ -247,7 +360,72 @@ const totalCompras = computed(() => {
   return qtdCompras;
 });
 
-// Funções utilitárias
+// Funções para categorias
+
+const editarCategoria = (categoria) => {
+  categoriaEditando.value = categoria;
+  novaCategoria.value.nome = categoria.nome;
+  novaCategoria.value.id = categoria.id;
+  showNovaCategoria.value = true;
+};
+
+const salvarCategoria = async () => {
+  if (categoriaEditando.value != null) {
+    const response = await categoriasService.putCategoria(
+      novaCategoria.value.nome,
+      novaCategoria.value.id
+    );
+    if (response.status == 200) {
+      alert(response.data.message);
+    } else {
+      console.log(response);
+    }
+  } else {
+    const response = await categoriasService.postCategoria(
+      novaCategoria.value.nome
+    );
+    if (response.status == 201) {
+      alert("Nova categoria cadastrada!");
+    }
+  }
+};
+
+const confirmarExclusaoCategoria = (categoria) => {
+  if (
+    confirm(`Tem certeza que deseja excluir a categoria "${categoria.nome}"?`)
+  ) {
+    excluirCategoria(categoria.id);
+  }
+};
+
+const excluirCategoria = async (categoriaId) => {
+  try {
+    const response = await fetch(`/api/categorias/${categoriaId}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      await carregarCategorias();
+    } else {
+      alert("Erro ao excluir categoria");
+    }
+  } catch (error) {
+    console.error("Erro:", error);
+    alert("Erro ao excluir categoria");
+  }
+};
+
+const fecharModal = () => {
+  showNovaCategoria.value = false;
+  categoriaEditando.value = null;
+  novaCategoria.value.nome = "";
+};
+
+// Funções existentes
+function abrircarrinho(dados) {
+  abrir.value = !abrir.value;
+}
+
 const formatPrice = (price) => {
   return parseFloat(price).toFixed(2).replace(".", ",");
 };
@@ -268,30 +446,49 @@ const calculateTotal = (itens) => {
 
 const getStatusClass = (status) => {
   const statusMap = {
-    pendente: "status-pending",
-    processando: "status-processing",
-    enviado: "status-shipped",
-    entregue: "status-delivered",
-    cancelado: "status-cancelled",
+    approved: "status-approved",
+    rejected: "status-rejected",
+    pending: "status-pending",
+    processing: "status-processing",
+    shipped: "status-shipped",
+    delivered: "status-delivered",
+    cancelled: "status-cancelled",
+    refunded: "status-refunded",
   };
-  return statusMap[status.toLowerCase()] || "status-default";
+  return statusMap[status?.toLowerCase()] || "status-default";
+};
+
+const getStatusText = (status) => {
+  const statusMap = {
+    approved: "Aprovado",
+    rejected: "Rejeitado",
+    pending: "Pendente",
+    processing: "Processando",
+    shipped: "Enviado",
+    delivered: "Entregue",
+    cancelled: "Cancelado",
+    refunded: "Reembolsado",
+  };
+  return statusMap[status?.toLowerCase()] || status || "Desconhecido";
 };
 
 const selectUser = async (user) => {
-  selectedUser.value = user;
-  const response = await compras.getComprasCliente(selectedUser.value.id);
-  if (response.status >= 200 && response.status < 300) {
-    comprasCliente.value = response.data.userCompras;
-    console.log(comprasCliente.value);
-    comprasCliente.value.map((compra) => {
-      compra.itens.map((item) => {
-        const response = conversao.centavosParaReais(item.precoUnitario);
-        item.precoUnitario = response;
-      });
-    });
-    console.log(comprasCliente.value);
+  if (selectedUser.value?.id == user?.id) {
+    selectedUser.value = "";
   } else {
-    alert("Erro ao buscar compras do usuário!");
+    selectedUser.value = user;
+    const response = await compras.getComprasCliente(selectedUser.value.id);
+    if (response.status >= 200 && response.status < 300) {
+      comprasCliente.value = response.data.userCompras;
+      comprasCliente.value.map((compra) => {
+        compra.itens.map((item) => {
+          const response = conversao.centavosParaReais(item.precoUnitario);
+          item.precoUnitario = response;
+        });
+      });
+    } else {
+      alert("Erro ao buscar compras do usuário!");
+    }
   }
 };
 
@@ -299,6 +496,9 @@ async function verifyAdmin() {
   const response = await userInfos.getUserInfos();
   if (response.status === 200) {
     isAdmin.value = response.data.usuario.isAdmin;
+    if (isAdmin.value) {
+      await carregarCategorias();
+    }
   }
   const responseUsers = await usuarios.getUsuarios();
   if (responseUsers.status >= 200 && responseUsers.status <= 300) {
@@ -312,6 +512,299 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Seção de Categorias */
+.categorias-section {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(106, 13, 173, 0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #6a0dad;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-icon {
+  font-size: 2rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6a0dad, #8b5fbf);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(106, 13, 173, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+}
+
+.categorias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.categoria-card {
+  background: #f8f4ff;
+  border: 2px solid #e8d5ff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.categoria-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(106, 13, 173, 0.15);
+  border-color: #6a0dad;
+}
+
+.categoria-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.categoria-nome {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #6a0dad;
+  margin: 0;
+}
+
+.categoria-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-edit,
+.btn-delete {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-edit:hover {
+  background: rgba(106, 13, 173, 0.1);
+}
+
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.categoria-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.categoria-produtos {
+  background: #6a0dad;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e8d5ff;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #6a0dad;
+  font-size: 1.5rem;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.btn-close:hover {
+  color: #6a0dad;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid #e8d5ff;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #6a0dad;
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.3rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e8d5ff;
+}
+
+.btn-secondary {
+  background: #f8f4ff;
+  color: #6a0dad;
+  border: 2px solid #e8d5ff;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #e8d5ff;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .categorias-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
 * {
   margin: 0;
   padding: 0;
@@ -664,40 +1157,69 @@ onMounted(() => {
 }
 
 .compra-status {
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Cores melhoradas para os status */
+.status-approved {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-color: #047857;
+}
+
+.status-rejected {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border-color: #b91c1c;
 }
 
 .status-pending {
-  background: #fff3cd;
-  color: #856404;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border-color: #b45309;
 }
 
 .status-processing {
-  background: #cce7ff;
-  color: #004085;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border-color: #1d4ed8;
 }
 
 .status-shipped {
-  background: #d1ecf1;
-  color: #0c5460;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border-color: #6d28d9;
 }
 
 .status-delivered {
-  background: #d4edda;
-  color: #155724;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  border-color: #0e7490;
 }
 
 .status-cancelled {
-  background: #f8d7da;
-  color: #721c24;
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: white;
+  border-color: #374151;
+}
+
+.status-refunded {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+  border-color: #c2410c;
 }
 
 .status-default {
-  background: #e2e3e5;
-  color: #383d41;
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  color: white;
+  border-color: #4b5563;
 }
 
 .compra-content {

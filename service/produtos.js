@@ -15,6 +15,7 @@ export default {
         conversao.reaisParaCentavos(formProduto.precoCentavos)
       );
       formData.append("QtdEstoque", formProduto.QtdEstoque);
+      formData.append("categoriaId", formProduto.categoria.id);
 
       // 3. Adicionar a imagem (se existir)
       if (formProduto.imagem) {
@@ -50,6 +51,7 @@ export default {
         conversao.reaisParaCentavos(formProduto.precoCentavos)
       );
       formData.append("QtdEstoque", formProduto.QtdEstoque);
+      formData.append("categoriaId", formProduto.categoria.id);
 
       // 3. Adicionar a imagem (se existir)
       if (formProduto.imagem) {
@@ -60,7 +62,7 @@ export default {
       const response = await api.put("/produtos", formData);
       return response;
     } catch (error) {
-      return error.response;
+      return error;
     }
   },
   async deletarProdutos(arrayIdsProdutos) {
@@ -77,10 +79,16 @@ export default {
       return error.response;
     }
   },
-  async getAllProdutos() {
+  async getAllProdutos(page, size) {
     try {
-      const response = await api.get("/produtos");
-
+      console.log(page);
+      console.log(size);
+      const response = await api.get("/produtos", {
+        params: {
+          page: page,
+          size: size,
+        },
+      });
       return response;
     } catch (error) {
       return error.response;
