@@ -297,7 +297,7 @@ const dadosPagamentoVar = ref();
 const categorias = ref([]);
 const filtroAtivo = ref("");
 const paginaAtual = ref(1);
-const tamanhoPagina = ref(8); // ou o tamanho que você preferir
+const tamanhoPagina = ref(2); // ou o tamanho que você preferir
 const temMaisProdutos = ref(true);
 async function filtrarProdutos(categoria) {
   // Reseta a paginação quando aplicar um filtro

@@ -7,7 +7,7 @@ export default {
       return;
     }
     try {
-      const response = await api.post("/categorias", {
+      const response = await api.post("/categoriasPrivate", {
         categoria: categoria,
       });
       return response;
@@ -51,7 +51,7 @@ export default {
   async putCategoria(categoriaNome, id) {
     try {
       console.log(categoriaNome);
-      const response = await api.put("/categorias", {
+      const response = await api.put("/categoriasPrivate", {
         categoria: {
           nome: categoriaNome,
           id: id,

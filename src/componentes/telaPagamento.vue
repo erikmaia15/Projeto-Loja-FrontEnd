@@ -154,13 +154,14 @@ function fecharCard() {
 }
 async function realizarCompra(dados, dadosProdutos) {
   const response = await paymentService.realizarPagamento(dados, dadosProdutos);
+  console.log(response);
   if (response.status >= 200 && response.status <= 300) {
     alert(
       "Compra foi efetuada e está sob análise, para mais informações vá em minhas compras!"
     );
     fecharCard();
   } else {
-    alert("Compra negada, tente novamente em pelo menos 1 minuto!");
+    alert(response.response.data.details);
     fecharCard();
   }
 }
