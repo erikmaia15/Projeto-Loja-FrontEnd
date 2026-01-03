@@ -255,19 +255,23 @@ async function gerarQRCode() {
 let pollingInterval = null;
 
 async function iniciarPolling(compraId) {
+  // 🔒 evita criar múltiplos intervals
+  if (pollingInterval) return;
+
   pollingInterval = setInterval(async () => {
     try {
       const response = await paymentPix.consultarCompraPix(compraId);
 
-      if (response.paid) {
+      if (response.data.paid === true) {
         paymentStatus.value = "approved";
         clearInterval(pollingInterval);
+        pollingInterval = null; // 🔥 ESSENCIAL
         clearInterval(timerInterval);
       }
     } catch (err) {
       console.log("Erro ao consultar pagamento");
     }
-  }, 5000); // a cada 5 segundos
+  }, 5000);
 }
 
 function copiarCodigo() {
