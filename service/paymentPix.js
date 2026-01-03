@@ -16,4 +16,14 @@ export default {
       return error;
     }
   },
+  async consultarCompraPix(id) {
+    try {
+      const response = await api.post(`/pagamento-pix/consultar-compra/${id}`);
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.log(error);
+      return error;
+    }
+  },
 };

@@ -2,9 +2,7 @@
   <section class="main-payment">
     <div class="payment-card">
       <div class="card-header">
-        <p>
-          Valor da compra: {{ formatCurrency(dadosPagamento.valorCompra) }} 💵
-        </p>
+        <p>Valor da compra: {{ formatCurrency(dadosPagamento.valorCompra) }} 💵</p>
         <button class="btn-fechar" @click="fecharCard">
           <span>&times;</span>
         </button>
@@ -94,11 +92,7 @@
             </div>
           </div>
 
-          <button
-            @click="gerarQRCode"
-            class="submit-button"
-            :disabled="!isFormValid"
-          >
+          <button @click="gerarQRCode" class="submit-button" :disabled="!isFormValid">
             <span class="button-text">Gerar QR Code PIX</span>
             <span class="button-icon">📱</span>
           </button>
@@ -124,20 +118,13 @@
             <div class="qrcode-wrapper">
               <img :src="qrCodeData" alt="QR Code PIX" class="qrcode-image" />
             </div>
-            <p class="qrcode-hint">
-              Abra o app do seu banco e escaneie o código
-            </p>
+            <p class="qrcode-hint">Abra o app do seu banco e escaneie o código</p>
           </div>
 
           <div class="copy-section">
             <label class="copy-label">Ou copie o código PIX:</label>
             <div class="copy-container">
-              <input
-                type="text"
-                :value="pixCopiaECola"
-                readonly
-                class="copy-input"
-              />
+              <input type="text" :value="pixCopiaECola" readonly class="copy-input" />
               <button @click="copiarCodigo" class="copy-button">
                 <span v-if="!copiado">📋</span>
                 <span v-else>✅</span>
@@ -252,15 +239,35 @@ async function gerarQRCode() {
       props.dadosPagamento.valorCompra,
       props.dadosPagamento.compras
     );
-    console.log(response);
-    setTimeout(() => {
-      qrCodeData.value = `data:image/png;base64,${response.data.qrCodeBase64}`;
-      pixCopiaECola.value = response.data.qrCode;
-      iniciarTimer();
-    }, 1000);
+
+    qrCodeData.value = `data:image/png;base64,${response.data.qrCodeBase64}`;
+    pixCopiaECola.value = response.data.qrCode;
+
+    iniciarTimer();
+
+    // 🔥 IMPORTANTE: id da compra salvo no backend
+    iniciarPolling(response.data.compraId);
   } catch (error) {
     alert("Erro ao gerar QR Code. Tente novamente.");
   }
+}
+
+let pollingInterval = null;
+
+async function iniciarPolling(compraId) {
+  pollingInterval = setInterval(async () => {
+    try {
+      const response = await paymentPix.consultarCompraPix(compraId);
+
+      if (response.paid) {
+        paymentStatus.value = "approved";
+        clearInterval(pollingInterval);
+        clearInterval(timerInterval);
+      }
+    } catch (err) {
+      console.log("Erro ao consultar pagamento");
+    }
+  }, 5000); // a cada 5 segundos
 }
 
 function copiarCodigo() {
@@ -273,7 +280,6 @@ function copiarCodigo() {
 
 function iniciarTimer() {
   let segundosRestantes = 600; // 10 minutos
-
   timerInterval = setInterval(() => {
     segundosRestantes--;
 
@@ -305,6 +311,7 @@ onBeforeUnmount(() => {
   if (timerInterval) {
     clearInterval(timerInterval);
   }
+  if (pollingInterval) clearInterval(pollingInterval);
 });
 </script>
 
