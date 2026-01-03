@@ -38,25 +38,13 @@
       </div>
       <div class="carousel-inner">
         <div class="carousel-item active">
-          <img
-            src="../assets/controleProduto.png"
-            class="d-block w-100"
-            alt="..."
-          />
+          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
         </div>
         <div class="carousel-item">
-          <img
-            src="../assets/controleProduto.png"
-            class="d-block w-100"
-            alt="..."
-          />
+          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
         </div>
         <div class="carousel-item">
-          <img
-            src="../assets/controleProduto.png"
-            class="d-block w-100"
-            alt="..."
-          />
+          <img src="../assets/controleProduto.png" class="d-block w-100" alt="..." />
         </div>
       </div>
       <button
@@ -80,15 +68,14 @@
     </div>
     <div class="description-container">
       <p class="text-descricao">
-        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por
-        Erik, apaixonado por tecnologia e inovação! Aqui, você encontra uma
-        ampla variedade de produtos eletrônicos, desde os mais essenciais até os
-        mais modernos lançamentos do mercado. Trabalhamos para oferecer
-        qualidade, confiança e praticidade em cada compra. Nosso objetivo é
-        facilitar sua vida com tecnologia acessível, com um atendimento rápido e
-        um site simples e seguro de navegar. 🚀 Por que escolher a nossa loja?
-        Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰 Entrega
-        rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
+        Seja bem-vindo à nossa loja online, um espaço criado com dedicação por Erik,
+        apaixonado por tecnologia e inovação! Aqui, você encontra uma ampla variedade de
+        produtos eletrônicos, desde os mais essenciais até os mais modernos lançamentos do
+        mercado. Trabalhamos para oferecer qualidade, confiança e praticidade em cada
+        compra. Nosso objetivo é facilitar sua vida com tecnologia acessível, com um
+        atendimento rápido e um site simples e seguro de navegar. 🚀 Por que escolher a
+        nossa loja? Produtos eletrônicos de alta qualidade 💡 Preços competitivos 💰
+        Entrega rápida 📦 Suporte atencioso e dedicado 🤝 A loja do Erik é o lugar certo
         para quem busca praticidade e tecnologia no dia a dia.
       </p>
     </div>
@@ -101,11 +88,7 @@
     <div class="filter-categoria">
       <label for="">Filtrar por categorias: {{ filtroAtivo }}</label>
       <div class="categorias-container">
-        <div
-          class="categoria-item"
-          v-for="categoria in categorias"
-          :key="categoria.id"
-        >
+        <div class="categoria-item" v-for="categoria in categorias" :key="categoria.id">
           <button id="btn-categoria" @click="filtrarProdutos(categoria)">
             {{ categoria.nome }}
           </button>
@@ -154,11 +137,7 @@
           </button>
         </div>
         <div class="card-image" @click="expandir(produto)">
-          <img
-            :src="produto.imagem"
-            class="product-image"
-            alt="Imagem do produto"
-          />
+          <img :src="produto.imagem" class="product-image" alt="Imagem do produto" />
         </div>
         <div class="card-body">
           <div class="card-info" @click="expandir(produto)">
@@ -180,11 +159,7 @@
           </button>
           <br />
           <div class="editAdmin">
-            <button
-              class="btn-add-cart"
-              v-if="isAdmin"
-              @click="editarProduto(produto)"
-            >
+            <button class="btn-add-cart" v-if="isAdmin" @click="editarProduto(produto)">
               Editar
             </button>
           </div>
@@ -202,9 +177,7 @@
       <button @click="confirmarRemocaoProdutos" class="btn-confirmar-remocao">
         Confirmar remoção ({{ produtosParaRemover.length }} produtos)
       </button>
-      <button @click="cancelarRemocao" class="btn-cancelar-remocao">
-        Cancelar
-      </button>
+      <button @click="cancelarRemocao" class="btn-cancelar-remocao">Cancelar</button>
     </div>
     <!-- <div v-if="produtos.length == 0">
       Não há produtos com essa categoria, escolha outra!
@@ -224,10 +197,7 @@
     </button>
 
     <!-- Mensagem quando não há mais produtos -->
-    <p
-      v-else-if="!temMaisProdutos && produtos.length > 0"
-      class="sem-mais-produtos"
-    >
+    <p v-else-if="!temMaisProdutos && produtos.length > 0" class="sem-mais-produtos">
       Todos os produtos foram carregados!
     </p>
     <p v-else-if="produtos.length == 0" class="sem-mais-produtos">
@@ -246,6 +216,7 @@
       @fechar="abrir = false"
       @dados-pagamento="(dados) => (dadosPagamentoVar = dados)"
       @tela-pagamento="viewTelaPagamento = true"
+      @tela-pagamento-pix="viewTelaPagamentoPix = true"
     ></Carrinho>
 
     <TelaPagamento
@@ -254,6 +225,12 @@
       :dadosPagamento="dadosPagamentoVar"
       @fechar-tela-pagamento="viewTelaPagamento = false"
     ></TelaPagamento>
+    <TelaPagamentoPix
+      v-if="viewTelaPagamentoPix"
+      :key="Date.now()"
+      :dadosPagamento="dadosPagamentoVar"
+      @fechar-tela-pagamento-pix="viewTelaPagamentoPix = false"
+    ></TelaPagamentoPix>
     <EditarProduto
       @fechar="produtoEditar = null"
       v-if="produtoEditar != null"
@@ -280,6 +257,7 @@ import EditarProduto from "../componentes/editarProduto.vue";
 import Footer from "../componentes/footer.vue";
 import carrinho from "../../service/carrinho.js";
 import TelaPagamento from "../componentes/telaPagamento.vue";
+import TelaPagamentoPix from "../componentes/telaPagamentoPix.vue";
 import categoriasService from "../../service/categorias.js";
 const url = ref("home");
 const dadosProduto = ref({});
@@ -293,6 +271,7 @@ const barraPesquisa = ref("");
 const produtosOriginais = ref([]);
 const produtosParaRemover = ref([]);
 const viewTelaPagamento = ref(false);
+const viewTelaPagamentoPix = ref(false);
 const dadosPagamentoVar = ref();
 const categorias = ref([]);
 const filtroAtivo = ref("");
@@ -305,9 +284,7 @@ async function filtrarProdutos(categoria) {
   temMaisProdutos.value = false;
 
   filtroAtivo.value = categoria.nome;
-  const response = await categoriasService.getProdutosComCategorias(
-    categoria.id
-  );
+  const response = await categoriasService.getProdutosComCategorias(categoria.id);
   if (response.status == 200) {
     produtos.value = response.data.data.produtos;
     produtosOriginais.value = produtos.value;
@@ -476,26 +453,6 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
 }
-.toggle-btn {
-  background: linear-gradient(135deg, #880093, #aa1bb8);
-  color: white;
-  border: none;
-
-  padding: 15px 25px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(136, 0, 147, 0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
 .sem-mais-produtos {
   background: linear-gradient(135deg, #880093, #aa1bb8);
   padding: 10px;
@@ -506,11 +463,7 @@ onMounted(async () => {
   margin: 20px 0;
   font-weight: 600;
 }
-.toggle-btn:hover {
-  background: linear-gradient(135deg, #aa1bb8, #cc44d1);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(136, 0, 147, 0.4);
-}
+
 #btn-categoria {
   width: fit-content;
   background: linear-gradient(135deg, #880093, #aa1bb8);

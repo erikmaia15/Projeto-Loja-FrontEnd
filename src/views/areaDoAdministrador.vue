@@ -31,7 +31,8 @@
       <div class="stat-card">
         <div class="stat-icon">👤</div>
         <div class="stat-content">
-          <span class="stat-number">{{ usuariosArray?.length || 0 }}</span>
+          <span class="stat-number">{{ totalClientes }}</span>
+
           <span class="stat-label">Total de Clientes</span>
         </div>
       </div>
@@ -290,9 +291,36 @@
           <h3>Nenhum cliente encontrado</h3>
           <p>Tente ajustar os filtros de busca</p>
         </div>
+        <section class="telas-root">
+          <!-- Botão para carregar mais produtos -->
+          <button
+            type="button"
+            class="toggle-btn"
+            :disabled="page + 1 >= totalPages"
+            @click="carregarMaisClientes"
+          >
+            {{
+              page + 1 < totalPages
+                ? "Carregar mais clientes"
+                : "Todos os clientes carregados"
+            }}
+          </button>
+
+          <!-- Mensagem quando não há mais produtos -->
+          <!-- <p
+          v-else-if="!temMaisProdutos && produtos.length > 0"
+          class="sem-mais-produtos"
+        >
+          Todos os produtos foram carregados!
+        </p>
+        <p v-else-if="produtos.length == 0" class="sem-mais-produtos">
+          Sem produtos para essa categoria!
+        </p> -->
+        </section>
       </div>
     </section>
   </section>
+
   <Footer></Footer>
 </template>
 
@@ -315,6 +343,10 @@ const searchTerm = ref("");
 const selectedUser = ref(null);
 const novoProduto = ref(false);
 const comprasCliente = ref([]);
+const page = ref(0);
+const size = ref(10);
+const totalClientes = ref(0);
+const totalPages = ref(0);
 
 // Novas variáveis para categorias
 const categorias = ref([]);
@@ -324,8 +356,21 @@ const novaCategoria = ref({
   nome: "",
   id: "",
 });
+const temMaisClientes = ref(false);
 
 const categoriasComQuantidade = ref([]);
+
+async function carregarMaisClientes() {
+  if (page.value + 1 >= totalPages.value) return;
+
+  page.value++;
+
+  const response = await usuarios.getUsuarios(page.value, size.value);
+
+  if (response.status >= 200 && response.status < 300) {
+    usuariosArray.value.push(...response.data.users);
+  }
+}
 
 const carregarCategorias = async () => {
   const response = await categoriasService.getCategorias();
@@ -355,7 +400,7 @@ const filteredUsers = computed(() => {
 const totalCompras = computed(() => {
   let qtdCompras = 0;
   usuariosArray.value.map((user) => {
-    qtdCompras += user.compras.length;
+    qtdCompras += user.compras.length || 0;
   });
   return qtdCompras;
 });
@@ -493,16 +538,12 @@ const selectUser = async (user) => {
 };
 
 async function verifyAdmin() {
-  const response = await userInfos.getUserInfos();
-  if (response.status === 200) {
-    isAdmin.value = response.data.usuario.isAdmin;
-    if (isAdmin.value) {
-      await carregarCategorias();
-    }
-  }
-  const responseUsers = await usuarios.getUsuarios();
+  const responseUsers = await usuarios.getUsuarios(page.value, size.value);
+  console.log(responseUsers);
   if (responseUsers.status >= 200 && responseUsers.status <= 300) {
     usuariosArray.value = responseUsers.data.users;
+    totalClientes.value = responseUsers.data.pagination.totalUsers;
+    totalPages.value = responseUsers.data.pagination.totalPages;
   }
 }
 

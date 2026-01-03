@@ -32,9 +32,7 @@
               <h4 class="produto-titulo">{{ produto.tituloProduto }}</h4>
               <p class="produto-descricao">{{ produto.descricao }}</p>
               <div class="produto-preco-container">
-                <span class="produto-preco"
-                  >R$ {{ produto.precoCentavos }}</span
-                >
+                <span class="produto-preco">R$ {{ produto.precoCentavos }}</span>
               </div>
             </div>
 
@@ -48,10 +46,7 @@
                   -
                 </button>
                 <span class="quantidade">{{ getQuantidade(produto) }}</span>
-                <button
-                  class="btn-quantidade"
-                  @click="aumentarQuantidade(produto)"
-                >
+                <button class="btn-quantidade" @click="aumentarQuantidade(produto)">
                   +
                 </button>
               </div>
@@ -89,9 +84,7 @@
           <button class="btn-continuar" @click="continuarComprando">
             Continuar Comprando
           </button>
-          <button class="btn-finalizar" @click="finalizarPedido">
-            Finalizar Pedido
-          </button>
+          <button class="btn-finalizar" @click="finalizarPedido">Finalizar Pedido</button>
         </div>
       </div>
     </div>
@@ -107,6 +100,7 @@ const emit = defineEmits([
   "removido",
   "tela-pagamento",
   "dados-pagamento",
+  "tela-pagamento-pix",
 ]);
 const carBuy = ref([]);
 const compras = ref([]);
@@ -198,7 +192,7 @@ function finalizarPedido() {
     compras: compras.value,
     valorCompra: valorTotal.value,
   });
-  emit("tela-pagamento");
+  emit("tela-pagamento-pix");
   fecharCarrinho();
 }
 

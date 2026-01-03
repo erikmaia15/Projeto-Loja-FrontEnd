@@ -4,3 +4,29 @@
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
 }
+.toggle-btn {
+  background: linear-gradient(135deg, #880093, #aa1bb8);
+  color: white;
+  border: none;
+
+  padding: 15px 25px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(136, 0, 147, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.toggle-btn:hover {
+  background: linear-gradient(135deg, #aa1bb8, #cc44d1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(136, 0, 147, 0.4);
+}
