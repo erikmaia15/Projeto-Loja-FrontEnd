@@ -18,7 +18,7 @@ export default {
   },
   async consultarCompraPix(id) {
     try {
-      const response = await api.post(`/pagamento-pix/consultar-compra/${id}`);
+      const response = await api.get(`/pagamento-pix/consultar-compra/${id}`);
       console.log(response);
       return response;
     } catch (error) {
