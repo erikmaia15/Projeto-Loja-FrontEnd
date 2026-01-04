@@ -21,9 +21,7 @@
         <span class="title-icon">👥</span>
         Clientes do E-commerce
       </h1>
-      <p class="page-subtitle">
-        Gerencie e visualize informações dos seus clientes
-      </p>
+      <p class="page-subtitle">Gerencie e visualize informações dos seus clientes</p>
     </div>
 
     <!-- Seção de Estatísticas -->
@@ -69,11 +67,7 @@
       </div>
 
       <div class="categorias-grid">
-        <div
-          v-for="categoria in categorias"
-          :key="categoria.id"
-          class="categoria-card"
-        >
+        <div v-for="categoria in categorias" :key="categoria.id" class="categoria-card">
           <div class="categoria-header">
             <h3 class="categoria-nome">{{ categoria.nome }}</h3>
             <div class="categoria-actions">
@@ -194,27 +188,20 @@
 
           <div class="user-cell user-compras">
             <div class="compras-badge">
-              <span class="compras-number">{{
-                usuario.compras.length || 0
-              }}</span>
+              <span class="compras-number">{{ usuario.compras.length || 0 }}</span>
               <span class="compras-label">compras</span>
             </div>
           </div>
 
           <!-- Área expandida para mostrar as compras -->
-          <div
-            class="compras-expandable"
-            v-if="selectedUser?.id === usuario.id"
-          >
+          <div class="compras-expandable" v-if="selectedUser?.id === usuario.id">
             <div class="compras-container">
               <div class="compras-header">
                 <h3 class="compras-title">
                   <span class="compras-icon">📦</span>
                   Compras de {{ usuario.nome }}
                 </h3>
-                <div class="compras-count">
-                  {{ comprasCliente.length }} pedido(s)
-                </div>
+                <div class="compras-count">{{ comprasCliente.length }} pedido(s)</div>
               </div>
 
               <div v-if="comprasCliente.length > 0" class="compras-grid">
@@ -225,28 +212,19 @@
                 >
                   <div class="compra-header">
                     <div class="compra-info">
-                      <span class="compra-id"
-                        >Pedido #{{ compra.id.slice(0, 8) }}</span
-                      >
-                      <span class="compra-date" v-if="compra.data">{{
-                        formatDate(compra.data)
-                      }}</span>
+                      <span class="compra-id">Pedido #{{ compra.id.slice(0, 8) }}</span>
+                      <span class="compra-date" v-if="compra.data">
+                        {{ formatDate(compra.data) }}
+                      </span>
                     </div>
-                    <div
-                      class="compra-status"
-                      :class="getStatusClass(compra.status)"
-                    >
+                    <div class="compra-status" :class="getStatusClass(compra.status)">
                       {{ getStatusText(compra.status) }}
                     </div>
                   </div>
 
                   <div class="compra-content">
                     <div class="itens-container">
-                      <div
-                        v-for="item in compra.itens"
-                        :key="item.id"
-                        class="item-card"
-                      >
+                      <div v-for="item in compra.itens" :key="item.id" class="item-card">
                         <div class="item-image">
                           <img :src="item.imagem" :alt="item.nomeProduto" />
                         </div>
@@ -254,12 +232,12 @@
                           <h4 class="item-name">{{ item.nomeProduto }}</h4>
                           <p class="item-description">{{ item.descricao }}</p>
                           <div class="item-quantity-price">
-                            <span class="item-quantity"
-                              >Quantidade: {{ item.quantidade || 1 }}</span
-                            >
-                            <span class="item-price"
-                              >R$ {{ formatPrice(item.precoUnitario) }}</span
-                            >
+                            <span class="item-quantity">
+                              Quantidade: {{ item.quantidade || 1 }}
+                            </span>
+                            <span class="item-price">
+                              R$ {{ formatPrice(item.precoUnitario) }}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -352,6 +330,7 @@ const totalPages = ref(0);
 const categorias = ref([]);
 const showNovaCategoria = ref(false);
 const categoriaEditando = ref(null);
+const loadingClientes = ref(false);
 const novaCategoria = ref({
   nome: "",
   id: "",
@@ -361,24 +340,31 @@ const temMaisClientes = ref(false);
 const categoriasComQuantidade = ref([]);
 
 async function carregarMaisClientes() {
+  if (loadingClientes.value) return;
   if (page.value + 1 >= totalPages.value) return;
 
-  page.value++;
+  loadingClientes.value = true;
+  page.value += 1;
 
   const response = await usuarios.getUsuarios(page.value, size.value);
 
   if (response.status >= 200 && response.status < 300) {
-    usuariosArray.value.push(...response.data.users);
+    const novosUsuarios = response.data.users || [];
+
+    usuariosArray.value = removerDuplicadosPorId([
+      ...usuariosArray.value,
+      ...novosUsuarios,
+    ]);
   }
+
+  loadingClientes.value = false;
 }
 
 const carregarCategorias = async () => {
   const response = await categoriasService.getCategorias();
   categorias.value = response.data.categorias;
   for (const categoria of categorias.value) {
-    const response = await categoriasService.getProdutosComCategorias(
-      categoria.id
-    );
+    const response = await categoriasService.getProdutosComCategorias(categoria.id);
     categoriasComQuantidade.value.push({
       ...categoria,
       quantidadeProdutos: response.data.data.produtos.length,
@@ -426,9 +412,7 @@ const salvarCategoria = async () => {
       console.log(response);
     }
   } else {
-    const response = await categoriasService.postCategoria(
-      novaCategoria.value.nome
-    );
+    const response = await categoriasService.postCategoria(novaCategoria.value.nome);
     if (response.status == 201) {
       alert("Nova categoria cadastrada!");
     }
@@ -436,12 +420,16 @@ const salvarCategoria = async () => {
 };
 
 const confirmarExclusaoCategoria = (categoria) => {
-  if (
-    confirm(`Tem certeza que deseja excluir a categoria "${categoria.nome}"?`)
-  ) {
+  if (confirm(`Tem certeza que deseja excluir a categoria "${categoria.nome}"?`)) {
     excluirCategoria(categoria.id);
   }
 };
+
+function removerDuplicadosPorId(lista) {
+  const map = new Map();
+  lista.forEach((user) => map.set(user.id, user));
+  return Array.from(map.values());
+}
 
 const excluirCategoria = async (categoriaId) => {
   try {
@@ -538,6 +526,12 @@ const selectUser = async (user) => {
 };
 
 async function verifyAdmin() {
+  const response = await userInfos.getUserInfos();
+  console.log(response);
+  if (response.data.usuario.isAdmin) {
+    isAdmin.value = true;
+    await carregarCategorias();
+  }
   const responseUsers = await usuarios.getUsuarios(page.value, size.value);
   console.log(responseUsers);
   if (responseUsers.status >= 200 && responseUsers.status <= 300) {
