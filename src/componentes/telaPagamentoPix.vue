@@ -34,20 +34,12 @@
               <strong>10 minutos</strong> para realizar o pagamento.
             </p>
           </div>
-
-          <div class="form-group">
-            <label for="pix-name">Nome Completo</label>
-            <input
-              type="text"
-              id="pix-name"
-              v-model="formData.nome"
-              class="styled-input"
-              placeholder="Digite seu nome completo"
-            />
-          </div>
-
           <div class="form-group">
             <label for="pix-email">E-mail</label>
+            <p for="pix-email">
+              Deixe o campo em branco caso queira usar o email cadastrado:⬇️
+              <span>{{ user.email }}</span>
+            </p>
             <input
               type="email"
               id="pix-email"
@@ -56,20 +48,6 @@
               placeholder="seu@email.com"
             />
           </div>
-
-          <div class="form-group">
-            <label for="pix-cpf">CPF</label>
-            <input
-              type="text"
-              id="pix-cpf"
-              v-model="formData.cpf"
-              @input="formatCPF"
-              class="styled-input"
-              placeholder="000.000.000-00"
-              maxlength="14"
-            />
-          </div>
-
           <div class="purchase-summary">
             <h4 class="summary-title">Resumo da Compra</h4>
             <div class="summary-items">
@@ -174,6 +152,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import paymentPix from "../../service/paymentPix";
+import userInfos from "../../utils/userInfos";
 
 const emit = defineEmits(["fechar-tela-pagamento-pix"]);
 
@@ -184,12 +163,12 @@ const props = defineProps({
   },
 });
 console.log(props.dadosPagamento);
-// Estados
 const qrCodeData = ref(null);
 const pixCopiaECola = ref("");
 const copiado = ref(false);
 const paymentStatus = ref("pending"); // pending, approved, rejected
-const tempoRestante = ref("10:00");
+const tempoRestante = ref("");
+const user = ref({});
 let timerInterval = null;
 
 const formData = ref({
@@ -206,11 +185,7 @@ const statusMessages = {
 
 // Computed
 const isFormValid = computed(() => {
-  return (
-    formData.value.nome.length > 3 &&
-    formData.value.email.includes("@") &&
-    formData.value.cpf.replace(/\D/g, "").length === 11
-  );
+  return formData.value.email.length > 0 ? formData.value.email.includes("@") : true;
 });
 
 // Métodos
@@ -237,16 +212,17 @@ async function gerarQRCode() {
   try {
     const response = await paymentPix.realizarPagamentoPix(
       props.dadosPagamento.valorCompra,
-      props.dadosPagamento.compras
+      props.dadosPagamento.compras,
+      formData.value.email
     );
 
     qrCodeData.value = `data:image/png;base64,${response.data.qrCodeBase64}`;
     pixCopiaECola.value = response.data.qrCode;
 
-    iniciarTimer();
+    iniciarTimer(response.data.expiresAt);
 
     // 🔥 IMPORTANTE: id da compra salvo no backend
-    iniciarPolling(response.data.compraId);
+    iniciarPolling(response.data.compraId, response.data.expiresAt);
   } catch (error) {
     alert("Erro ao gerar QR Code. Tente novamente.");
   }
@@ -254,19 +230,35 @@ async function gerarQRCode() {
 
 let pollingInterval = null;
 
-async function iniciarPolling(compraId) {
-  // 🔒 evita criar múltiplos intervals
+async function iniciarPolling(compraId, expiresAtIso) {
+  // 🔒 evita múltiplos intervals
   if (pollingInterval) return;
 
+  const expiresAtMs = new Date(expiresAtIso).getTime();
+
+  if (isNaN(expiresAtMs)) {
+    console.error("expiresAt inválido no polling:", expiresAtIso);
+    return;
+  }
+
   pollingInterval = setInterval(async () => {
+    const agora = Date.now();
+    if (agora >= expiresAtMs) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+      return;
+    }
+
     try {
       const response = await paymentPix.consultarCompraPix(compraId);
 
       if (response.data.paid === true) {
         paymentStatus.value = "approved";
+
         clearInterval(pollingInterval);
-        pollingInterval = null; // 🔥 ESSENCIAL
-        clearInterval(timerInterval);
+        pollingInterval = null;
+
+        clearInterval(timerInterval); // 🔥 sincroniza com o timer
       }
     } catch (err) {
       console.log("Erro ao consultar pagamento");
@@ -282,20 +274,44 @@ function copiarCodigo() {
   }, 2000);
 }
 
-function iniciarTimer() {
-  let segundosRestantes = 600; // 10 minutos
-  timerInterval = setInterval(() => {
-    segundosRestantes--;
+function iniciarTimer(expiresAtIso) {
+  const expiresAtMs = new Date(expiresAtIso).getTime();
 
-    const minutos = Math.floor(segundosRestantes / 60);
-    const segundos = segundosRestantes % 60;
-    tempoRestante.value = `${minutos}:${segundos.toString().padStart(2, "0")}`;
+  if (isNaN(expiresAtMs)) {
+    console.error("expiresAt inválido:", expiresAtIso);
+    tempoRestante.value = "--:--:--";
+    return;
+  }
 
-    if (segundosRestantes <= 0) {
+  function atualizarTimer() {
+    const agora = Date.now();
+    const diferencaMs = expiresAtMs - agora;
+
+    if (diferencaMs <= 0) {
       clearInterval(timerInterval);
+      tempoRestante.value = "00:00:00";
       paymentStatus.value = "rejected";
+
+      return;
     }
-  }, 1000);
+
+    const totalSegundos = Math.floor(diferencaMs / 1000);
+
+    const horas = Math.floor(totalSegundos / 3600);
+    const minutos = Math.floor((totalSegundos % 3600) / 60);
+    const segundos = totalSegundos % 60;
+
+    tempoRestante.value = `${horas
+      .toString()
+      .padStart(2, "0")}:${minutos
+      .toString()
+      .padStart(2, "0")}:${segundos.toString().padStart(2, "0")}`;
+  }
+
+  // Atualiza imediatamente
+  atualizarTimer();
+
+  timerInterval = setInterval(atualizarTimer, 1000);
 }
 
 function cancelarPagamento() {
@@ -316,6 +332,12 @@ onBeforeUnmount(() => {
     clearInterval(timerInterval);
   }
   if (pollingInterval) clearInterval(pollingInterval);
+});
+onMounted(async () => {
+  const infos = await userInfos.getUserInfos();
+  if (infos) {
+    user.value = infos.data.usuario;
+  }
 });
 </script>
 

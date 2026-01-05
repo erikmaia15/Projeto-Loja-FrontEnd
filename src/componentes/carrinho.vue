@@ -89,12 +89,19 @@
       </div>
     </div>
   </section>
+  <MeioPagamento
+    v-if="mostrarModal"
+    :valorTotal="valorTotal"
+    @fechar="mostrarModal = false"
+    @selecionar-metodo="handleMetodoPagamento"
+  />
 </template>
 
 <script setup>
 import { onMounted, ref, computed } from "vue";
 import carrinho from "../../service/carrinho";
 import conversao from "../../utils/conversao.js";
+import MeioPagamento from "./modals/meioPagamento.vue";
 const emit = defineEmits([
   "fechar",
   "removido",
@@ -103,6 +110,7 @@ const emit = defineEmits([
   "tela-pagamento-pix",
 ]);
 const carBuy = ref([]);
+const mostrarModal = ref(false);
 const compras = ref([]);
 const quantidades = ref({});
 
@@ -125,6 +133,21 @@ const valorTotal = computed(() => {
   const valorFinal = conversao.centavosParaReais(total);
   return valorFinal;
 });
+
+function abrirModal() {
+  mostrarModal.value = true;
+}
+function handleMetodoPagamento(metodo) {
+  if (metodo === "pix") {
+    emit("tela-pagamento-pix");
+  } else {
+    // Sua lógica para Cartão
+    emit("tela-pagamento");
+  }
+
+  mostrarModal.value = false;
+  fecharCarrinho();
+}
 
 async function getCarrinho() {
   try {
@@ -192,8 +215,7 @@ function finalizarPedido() {
     compras: compras.value,
     valorCompra: valorTotal.value,
   });
-  emit("tela-pagamento-pix");
-  fecharCarrinho();
+  abrirModal();
 }
 
 onMounted(() => {

@@ -1,13 +1,14 @@
 import api from "../router/api";
 
 export default {
-  async realizarPagamentoPix(preco, compras) {
+  async realizarPagamentoPix(preco, compras, email) {
     try {
       console.log(preco);
       console.log(compras);
       const response = await api.post("/pagamento-pix", {
         preco,
         compras,
+        email,
       });
       console.log(response);
       return response;
